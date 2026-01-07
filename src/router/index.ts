@@ -6,6 +6,7 @@ import ForgotPassword from '../views/ForgotPassword.vue';
 import Dashboard from '../views/Dashboard.vue';
 import Profile from '../views/Profile.vue';
 import Security from '../views/Security.vue';
+import AdminUsers from '../views/AdminUsers.vue';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -46,11 +47,17 @@ const router = createRouter({
       component: Security,
       meta: { requiresAuth: true }
     },
+    { 
+      path: '/admin/users', 
+      name: 'AdminUsers', 
+      component: AdminUsers,
+      meta: { requiresAuth: true, requiresAdmin: true }
+    },
     { path: '/', redirect: '/dashboard' }, // Redirect to dashboard, guard will handle if not logged in
   ],
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
   const auth = useAuthStore();
   const isAuthenticated = !!auth.token;
 
@@ -58,6 +65,8 @@ router.beforeEach((to, from, next) => {
     next({ name: 'Login' });
   } else if (to.meta.guestOnly && isAuthenticated) {
     next({ name: 'Dashboard' });
+  } else if (to.meta.requiresAdmin && auth.user?.role !== 'ADMIN') {
+    next({ name: 'Dashboard' }); // Or 403 page
   } else {
     next();
   }

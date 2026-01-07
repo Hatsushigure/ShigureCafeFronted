@@ -26,11 +26,9 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { useAuthStore } from '../stores/auth';
-import { useRouter } from 'vue-router';
 import NavBar from '../components/NavBar.vue';
 
 const auth = useAuthStore();
-const router = useRouter();
 
 onMounted(async () => {
   if (!auth.user) {

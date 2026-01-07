@@ -89,13 +89,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useAuthStore } from '../stores/auth';
-import { useRouter } from 'vue-router';
 import { useToastStore } from '../stores/toast';
 import NavBar from '../components/NavBar.vue';
 import api from '../api';
 
 const auth = useAuthStore();
-const router = useRouter();
 const toastStore = useToastStore();
 
 // Email Update Logic

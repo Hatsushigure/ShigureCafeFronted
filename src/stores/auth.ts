@@ -33,7 +33,7 @@ export const useAuthStore = defineStore('auth', {
         const username = decoded.sub;
         const { data } = await api.get<User[]>(`/users?username=${username}`);
         if (data && data.length > 0) {
-          this.user = data[0];
+          this.user = data[0] ?? null;
         }
       } catch (error) {
         console.error('Failed to fetch user', error);
