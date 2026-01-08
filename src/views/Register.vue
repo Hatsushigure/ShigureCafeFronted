@@ -61,6 +61,11 @@
                <label for="password" class="block text-sm font-medium text-gray-700 mb-1 ml-1">密码</label>
                <input v-model="form.password" id="password" name="password" autocomplete="new-password" type="password" required class="appearance-none rounded-xl block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 sm:text-sm transition-all duration-200 bg-white/50 focus:bg-white" placeholder="设置您的登录密码" />
             </div>
+
+            <div class="group">
+               <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-1 ml-1">确认密码</label>
+               <input v-model="form.confirmPassword" id="confirmPassword" name="confirmPassword" autocomplete="new-password" type="password" required class="appearance-none rounded-xl block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 sm:text-sm transition-all duration-200 bg-white/50 focus:bg-white" placeholder="请再次输入密码" />
+            </div>
           </div>
 
           <button :disabled="loading" type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 ease-out mt-6">
@@ -93,6 +98,7 @@ const form = reactive({
   username: '',
   email: '',
   password: '',
+  confirmPassword: '',
   verificationCode: ''
 });
 
@@ -142,9 +148,15 @@ const handleRegister = async () => {
     return;
   }
 
+  if (form.password !== form.confirmPassword) {
+    toastStore.error('注册失败', '两次输入的密码不一致');
+    return;
+  }
+
   loading.value = true;
   try {
-    const response = await api.post('/registrations', form);
+    const { confirmPassword, ...registerData } = form;
+    const response = await api.post('/registrations', registerData);
     auditCode.value = response.data.auditCode;
     registrationSuccess.value = true;
     toastStore.success('注册申请已提交', '请保存您的审核码');

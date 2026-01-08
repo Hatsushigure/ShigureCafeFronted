@@ -175,9 +175,15 @@
                     </div>
                     <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
                       <h3 class="text-lg leading-6 font-bold text-gray-900" id="modal-title">重置密码: {{ selectedUser?.username }}</h3>
-                      <div class="mt-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">新密码</label>
-                        <input v-model="passwordForm.newPassword" type="password" class="appearance-none rounded-xl relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 sm:text-sm" placeholder="请输入新密码">
+                      <div class="mt-4 space-y-4">
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700 mb-1">新密码</label>
+                          <input v-model="passwordForm.newPassword" type="password" class="appearance-none rounded-xl relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 sm:text-sm" placeholder="请输入新密码">
+                        </div>
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700 mb-1">确认密码</label>
+                          <input v-model="passwordForm.confirmPassword" type="password" class="appearance-none rounded-xl relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 sm:text-sm" placeholder="请再次输入新密码">
+                        </div>
                         <p class="mt-2 text-xs text-gray-500">此操作将强制重置用户的登录密码。</p>
                       </div>
                     </div>
@@ -273,7 +279,8 @@ const editForm = ref({
 });
 
 const passwordForm = ref({
-  newPassword: ''
+  newPassword: '',
+  confirmPassword: ''
 });
 
 const fetchUsers = async () => {
@@ -342,6 +349,7 @@ const saveEdit = async () => {
 const openPassword = (user: User) => {
   selectedUser.value = user;
   passwordForm.value.newPassword = '';
+  passwordForm.value.confirmPassword = '';
   showPasswordModal.value = true;
 };
 
@@ -352,6 +360,12 @@ const closePassword = () => {
 
 const savePassword = async () => {
   if (!selectedUser.value) return;
+
+  if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
+    toast.error('两次输入的密码不一致');
+    return;
+  }
+
   try {
     await api.put(`/users/${selectedUser.value.username}/password`, {
       oldPassword: '', // Not needed for admin reset
