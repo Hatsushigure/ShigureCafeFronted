@@ -6,7 +6,7 @@
       <header>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <h1 class="text-3xl font-extrabold leading-tight text-gray-900 tracking-tight animate-[slide-up_0.5s_ease-out]">
-            欢迎回来, <span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">{{ auth.user?.username || '用户' }}</span>
+            欢迎回来, <span class="text-indigo-600">{{ auth.user?.nickname || auth.user?.username || '用户' }}</span>
           </h1>
           <div class="text-sm text-gray-500 animate-[slide-up_0.5s_ease-out_0.1s_both]">
             今天是 {{ new Date().toLocaleDateString() }}

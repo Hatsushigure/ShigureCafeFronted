@@ -26,6 +26,14 @@
                   </div>
 
                   <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">昵称</dt>
+                    <dd class="mt-1 text-sm text-gray-900 flex items-center space-x-2">
+                      <span class="font-medium text-gray-900">{{ auth.user?.nickname || '未设置' }}</span>
+                      <button @click="openNicknameModal" class="text-blue-600 hover:text-blue-700 text-xs font-bold border border-blue-200 rounded px-2 py-0.5 hover:bg-blue-50 transition-colors">修改</button>
+                    </dd>
+                  </div>
+
+                  <div class="sm:col-span-1">
                     <dt class="text-sm font-medium text-gray-500">角色权限</dt>
                     <dd class="mt-1 text-sm text-gray-900">
                       <span class="px-2.5 py-0.5 inline-flex text-xs font-medium rounded-full bg-blue-100 text-blue-800">
@@ -125,6 +133,51 @@
         </div>
       </div>
     </transition>
+
+    <!-- Nickname Update Modal -->
+    <transition
+      enter-active-class="ease-out duration-300"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="ease-in duration-200"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div v-if="showNicknameModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+          <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity backdrop-blur-sm" aria-hidden="true" @click="showNicknameModal = false"></div>
+          <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+          <transition
+            enter-active-class="ease-out duration-300"
+            enter-from-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            enter-to-class="opacity-100 translate-y-0 sm:scale-100"
+            leave-active-class="ease-in duration-200"
+            leave-from-class="opacity-100 translate-y-0 sm:scale-100"
+            leave-to-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+          >
+            <div class="relative inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <h3 class="text-xl leading-6 font-bold text-gray-900" id="modal-title">修改昵称</h3>
+                <div class="mt-4 space-y-4">
+                  <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">新昵称</label>
+                      <input v-model="nicknameForm.nickname" type="text" class="block w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="请输入新昵称">
+                  </div>
+                </div>
+              </div>
+              <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button @click="handleUpdateNickname" :disabled="nicknameLoading" type="button" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 transition-colors">
+                  {{ nicknameLoading ? '保存中...' : '保存修改' }}
+                </button>
+                <button @click="showNicknameModal = false" type="button" class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+                  取消
+                </button>
+              </div>
+            </div>
+          </transition>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -137,6 +190,31 @@ import api from '../api';
 
 const auth = useAuthStore();
 const toastStore = useToastStore();
+
+// Nickname Update Logic
+const showNicknameModal = ref(false);
+const nicknameForm = ref({ nickname: '' });
+const nicknameLoading = ref(false);
+
+const openNicknameModal = () => {
+    nicknameForm.value.nickname = auth.user?.nickname || '';
+    showNicknameModal.value = true;
+};
+
+const handleUpdateNickname = async () => {
+    if (!auth.user?.username) return;
+    nicknameLoading.value = true;
+    try {
+        await api.put(`/users/${auth.user.username}/nickname`, nicknameForm.value);
+        toastStore.success('修改成功', '您的昵称已成功更新。');
+        showNicknameModal.value = false;
+        await auth.fetchCurrentUser();
+    } catch (e: any) {
+        toastStore.error('修改失败', e.response?.data?.message || '系统繁忙，请稍后再试');
+    } finally {
+        nicknameLoading.value = false;
+    }
+};
 
 // Email Update Logic
 const showEmailModal = ref(false);

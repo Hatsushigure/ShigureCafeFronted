@@ -37,6 +37,11 @@
                <label for="username" class="block text-sm font-medium text-gray-700 mb-1 ml-1">用户名</label>
                <input v-model="form.username" id="username" name="username" autocomplete="username" type="text" required class="appearance-none rounded-xl relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:z-10 sm:text-sm transition-all duration-200 ease-in-out bg-white/50 focus:bg-white" placeholder="3-50位字符，包含字母数字" />
              </div>
+
+             <div class="group">
+               <label for="nickname" class="block text-sm font-medium text-gray-700 mb-1 ml-1">昵称</label>
+               <input v-model="form.nickname" id="nickname" name="nickname" type="text" class="appearance-none rounded-xl relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:z-10 sm:text-sm transition-all duration-200 ease-in-out bg-white/50 focus:bg-white" placeholder="您的显示名称 (选填)" />
+             </div>
             
             <div class="group">
                <label for="email" class="block text-sm font-medium text-gray-700 mb-1 ml-1">电子邮箱</label>
@@ -96,6 +101,7 @@ import { useToastStore } from '../stores/toast';
 const toastStore = useToastStore();
 const form = reactive({
   username: '',
+  nickname: '',
   email: '',
   password: '',
   confirmPassword: '',

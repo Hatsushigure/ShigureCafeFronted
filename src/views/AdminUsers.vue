@@ -36,7 +36,7 @@
                 <table class="min-w-full divide-y divide-gray-200">
                   <thead class="bg-gray-50/50">
                     <tr>
-                      <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户名</th>
+                      <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户 / 昵称</th>
                       <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">电子邮箱</th>
                       <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">角色</th>
                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
@@ -48,10 +48,11 @@
                       <td class="px-6 py-4 whitespace-nowrap">
                         <div class="flex items-center">
                           <div class="h-8 w-8 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center text-blue-600 font-bold text-xs">
-                            {{ user.username.substring(0, 2).toUpperCase() }}
+                            {{ (user.nickname || user.username).substring(0, 2).toUpperCase() }}
                           </div>
                           <div class="ml-3">
                             <div class="text-sm font-medium text-gray-900">{{ user.username }}</div>
+                            <div class="text-xs text-gray-500">{{ user.nickname || '未设置昵称' }}</div>
                           </div>
                         </div>
                       </td>
@@ -121,6 +122,10 @@
                     <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
                       <h3 class="text-lg leading-6 font-bold text-gray-900" id="modal-title">编辑用户: {{ selectedUser?.username }}</h3>
                       <div class="mt-4 space-y-4">
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700 mb-1">昵称</label>
+                          <input v-model="editForm.nickname" type="text" class="appearance-none rounded-xl relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 sm:text-sm" placeholder="未设置昵称">
+                        </div>
                         <div>
                           <label class="block text-sm font-medium text-gray-700 mb-1">电子邮箱</label>
                           <input v-model="editForm.email" type="email" class="appearance-none rounded-xl relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 sm:text-sm">
@@ -291,6 +296,7 @@ import { Edit2, KeyRound, RotateCw, Loader2, Users, UserCog, Trash2, ChevronDown
 
 interface User {
   username: string;
+  nickname: string;
   email: string;
   role: string;
   status: string;
@@ -307,6 +313,7 @@ const toast = useToastStore();
 const auth = useAuthStore();
 
 const editForm = ref({
+  nickname: '',
   email: '',
   role: 'USER'
 });
@@ -351,6 +358,7 @@ const formatStatus = (status: string) => {
 
 const openEdit = (user: User) => {
   selectedUser.value = user;
+  editForm.value.nickname = user.nickname || '';
   editForm.value.email = user.email;
   editForm.value.role = user.role;
   showEditModal.value = true;
@@ -365,6 +373,10 @@ const closeEdit = () => {
 const saveEdit = async () => {
   if (!selectedUser.value) return;
   try {
+    // Update Nickname
+    if (editForm.value.nickname !== (selectedUser.value.nickname || '')) {
+      await api.put(`/users/${selectedUser.value.username}/nickname`, { nickname: editForm.value.nickname });
+    }
     // Update Role
     if (editForm.value.role !== selectedUser.value.role) {
       await api.put(`/users/${selectedUser.value.username}/role`, { role: editForm.value.role });
