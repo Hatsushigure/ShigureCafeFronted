@@ -23,9 +23,9 @@ export const useAuthStore = defineStore('auth', {
   }),
   actions: {
     async login(credentials: any) {
-      const { data } = await api.post('/auth/token', credentials);
-      this.token = data.token;
-      localStorage.setItem('token', data.token);
+      const response: any = await api.post('/auth/token', credentials);
+      this.token = response.token;
+      localStorage.setItem('token', response.token);
       await this.fetchCurrentUser();
     },
     async fetchCurrentUser() {
@@ -33,7 +33,7 @@ export const useAuthStore = defineStore('auth', {
       try {
         const decoded = jwtDecode<JwtPayload>(this.token);
         const username = decoded.sub;
-        const { data } = await api.get<User[]>(`/users?username=${username}`);
+        const data = await api.get<User[]>(`/users?username=${username}`);
         if (data && data.length > 0) {
           this.user = data[0] ?? null;
         }

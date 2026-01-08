@@ -59,7 +59,7 @@ const handleLogin = async () => {
     await auth.login(form.value);
     router.push('/dashboard');
   } catch (e: any) {
-    toastStore.error('登录失败', e.response?.data?.message || '请检查您的用户名和密码');
+    toastStore.error('登录失败', e.message || '请检查您的用户名和密码');
   } finally {
     loading.value = false;
   }

@@ -1,4 +1,5 @@
-﻿import axios from 'axios';
+import axios from 'axios';
+import { getErrorMessage } from '../utils/errorMessages';
 
 const api = axios.create({
   baseURL: '/api/v1',
@@ -16,12 +17,26 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Return standard data directly
+    return response.data;
+  },
   (error) => {
     if (error.response?.status === 401 && !error.config.url?.includes('/auth/token')) {
       localStorage.removeItem('token');
       window.location.href = '/login';
     }
+
+    // Handle structured error response
+    if (error.response?.data && error.response.data.code) {
+      const { code, metadata } = error.response.data;
+      error.message = getErrorMessage(code, metadata);
+    } else if (error.response?.status === 403) {
+      error.message = getErrorMessage('FORBIDDEN');
+    } else if (error.response?.status === 401) {
+      error.message = getErrorMessage('UNAUTHORIZED');
+    }
+
     return Promise.reject(error);
   }
 );

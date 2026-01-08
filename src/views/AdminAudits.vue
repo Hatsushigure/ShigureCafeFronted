@@ -205,16 +205,15 @@ const fetchAudits = async () => {
   loading.value = true;
   const minTimer = new Promise(resolve => setTimeout(resolve, 600));
   try {
-    const codesResponse = await api.get('/registrations');
-    const codes: string[] = codesResponse.data;
+    const codes = await api.get<string[]>('/registrations');
     
-    const detailsPromises = codes.map(code => api.get(`/registrations/${code}`));
-    const detailsResponses = await Promise.all(detailsPromises);
+    const detailsPromises = codes.map(code => api.get<Audit>(`/registrations/${code}`));
+    const details = await Promise.all(detailsPromises);
     
-    audits.value = detailsResponses.map(res => res.data);
+    audits.value = details;
     await minTimer;
-  } catch (error) {
-    toast.error('获取审核列表失败');
+  } catch (error: any) {
+    toast.error('获取审核列表失败', error.message);
   } finally {
     loading.value = false;
   }
@@ -227,8 +226,8 @@ const approveAudit = async (auditCode: string) => {
     await api.patch(`/registrations/${auditCode}`);
     toast.success('审核已通过');
     await fetchAudits();
-  } catch (error) {
-    toast.error('操作失败');
+  } catch (error: any) {
+    toast.error('操作失败', error.message);
   }
 };
 

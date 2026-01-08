@@ -44,9 +44,8 @@
 
                   <div class="sm:col-span-1">
                     <dt class="text-sm font-medium text-gray-500">电子邮箱</dt>
-                    <dd class="mt-1 text-sm text-gray-900 flex items-center space-x-2">
+                    <dd class="mt-1 text-sm text-gray-900">
                       <span class="font-medium">{{ auth.user?.email }}</span>
-                      <button @click="showEmailModal = true" class="text-blue-600 hover:text-blue-700 text-xs font-bold border border-blue-200 rounded px-2 py-0.5 hover:bg-blue-50 transition-colors">修改</button>
                     </dd>
                   </div>
 
@@ -71,69 +70,6 @@
           </div>
         </div>
       </main>
-    </div>
-
-    <!-- Email Update Modal -->
-    <div v-if="showEmailModal" class="fixed inset-0 z-50 overflow-y-auto">
-      <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <!-- Backdrop Transition -->
-        <transition
-          enter-active-class="ease-out duration-200"
-          enter-from-class="opacity-0"
-          enter-to-class="opacity-100"
-          leave-active-class="ease-in duration-150"
-          leave-from-class="opacity-100"
-          leave-to-class="opacity-0"
-          appear
-        >
-          <div class="fixed inset-0 bg-black/20 backdrop-blur-md" aria-hidden="true" @click="showEmailModal = false"></div>
-        </transition>
-
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-        
-        <transition
-          enter-active-class="ease-out duration-300"
-          enter-from-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-          enter-to-class="opacity-100 translate-y-0 sm:scale-100"
-          leave-active-class="ease-in duration-200"
-          leave-from-class="opacity-100 translate-y-0 sm:scale-100"
-          leave-to-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-          appear
-        >
-          <div class="relative inline-block align-middle bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all w-full sm:my-8 sm:align-middle sm:max-w-xl">
-            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-              <h3 class="text-xl leading-6 font-bold text-gray-900" id="modal-title">修改绑定邮箱</h3>
-              <div class="mt-4 space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">新邮箱地址</label>
-                    <div class="flex rounded-xl shadow-sm">
-                        <input v-model="newEmailForm.newEmail" type="email" class="flex-1 min-w-0 block w-full px-4 py-2 rounded-l-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 sm:text-sm border" placeholder="请输入新邮箱">
-                        <button @click="sendCode" :disabled="sending || countdown > 0" class="inline-flex items-center px-4 py-2 border border-l-0 border-gray-300 rounded-r-xl bg-gray-50 text-gray-500 text-sm font-medium hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50 transition-colors w-32 justify-center">
-                            <svg v-if="sending" class="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            {{ countdown > 0 ? `${countdown}s` : (sending ? '发送中...' : '获取验证码') }}
-                        </button>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">验证码</label>
-                    <input v-model="newEmailForm.verificationCode" type="text" class="block w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="请输入验证码">
-                </div>
-              </div>
-            </div>
-            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-              <button @click="handleUpdateEmail" :disabled="loading" type="button" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 transition-colors">
-                {{ loading ? '保存中...' : '保存修改' }}
-              </button>
-              <button @click="showEmailModal = false" type="button" class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
-                取消
-              </button>
-            </div>
-          </div>
-        </transition>
-      </div>
     </div>
 
     <!-- Nickname Update Modal -->
@@ -217,64 +153,9 @@ const handleUpdateNickname = async () => {
         showNicknameModal.value = false;
         await auth.fetchCurrentUser();
     } catch (e: any) {
-        toastStore.error('修改失败', e.response?.data?.message || '系统繁忙，请稍后再试');
+        toastStore.error('修改失败', e.message || '系统繁忙，请稍后再试');
     } finally {
         nicknameLoading.value = false;
-    }
-};
-
-// Email Update Logic
-const showEmailModal = ref(false);
-const newEmailForm = ref({ newEmail: '', verificationCode: '' });
-const loading = ref(false);
-const sending = ref(false);
-const countdown = ref(0);
-
-const sendCode = async () => {
-    if (!newEmailForm.value.newEmail) {
-        toastStore.error('发送失败', '请输入新邮箱地址');
-        return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(newEmailForm.value.newEmail)) {
-        toastStore.error('发送失败', '请输入有效的邮箱地址');
-        return;
-    }
-
-    sending.value = true;
-    
-    try {
-        await api.post('/auth/verification-codes', { email: newEmailForm.value.newEmail, type: 'UPDATE_EMAIL' });
-        
-        sending.value = false;
-        toastStore.success('发送成功', '验证码已发送至您的邮箱，请注意查收。');
-        countdown.value = 60;
-        const timer = setInterval(() => {
-            countdown.value--;
-            if (countdown.value <= 0) {
-                clearInterval(timer);
-            }
-        }, 1000);
-    } catch (e: any) {
-        // Show error only on failure
-        toastStore.error('发送失败', e.response?.data?.message || '请求失败，请稍后重试');
-        sending.value = false;
-    } 
-};
-
-const handleUpdateEmail = async () => {
-    if (!auth.user?.username) return;
-    loading.value = true;
-    try {
-        await api.put(`/users/${auth.user.username}/email`, newEmailForm.value);
-        toastStore.success('修改成功', '您的邮箱已成功更新。');
-        showEmailModal.value = false;
-        await auth.fetchCurrentUser(); // Refresh user data
-    } catch (e: any) {
-        toastStore.error('修改失败', e.response?.data?.message || '请检查您的验证码是否正确');
-    } finally {
-        loading.value = false;
     }
 };
 

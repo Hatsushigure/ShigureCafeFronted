@@ -142,7 +142,7 @@ const sendCode = async () => {
       }
     }, 1000);
   } catch (e: any) {
-    toastStore.error('发送失败', e.response?.data?.message || '请求失败，请稍后重试');
+    toastStore.error('发送失败', e.message || '请求失败，请稍后重试');
     sending.value = false;
   }
 };
@@ -162,12 +162,12 @@ const handleRegister = async () => {
   loading.value = true;
   try {
     const { confirmPassword, ...registerData } = form;
-    const response = await api.post('/registrations', registerData);
-    auditCode.value = response.data.auditCode;
+    const response: any = await api.post('/registrations', registerData);
+    auditCode.value = response.auditCode;
     registrationSuccess.value = true;
     toastStore.success('注册申请已提交', '请保存您的审核码');
   } catch (e: any) {
-    toastStore.error('注册失败', e.response?.data?.message || '请检查您填写的信息');
+    toastStore.error('注册失败', e.message || '请检查您填写的信息');
   } finally {
     loading.value = false;
   }

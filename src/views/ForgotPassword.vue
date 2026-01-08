@@ -107,7 +107,7 @@ const sendCode = async () => {
       }
     }, 1000);
   } catch (e: any) {
-    toastStore.error('发送失败', e.response?.data?.message || '请求失败，请稍后重试');
+    toastStore.error('发送失败', e.message || '请求失败，请稍后重试');
     sending.value = false;
   }
 };
@@ -125,7 +125,7 @@ const handleReset = async () => {
     toastStore.success('操作成功', '密码已重置，请使用新密码登录。');
     router.push('/login');
   } catch (e: any) {
-    toastStore.error('重置失败', e.response?.data?.message || '请检查验证码是否正确');
+    toastStore.error('重置失败', e.message || '请检查验证码是否正确');
   } finally {
     loading.value = false;
   }

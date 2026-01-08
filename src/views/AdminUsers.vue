@@ -344,11 +344,11 @@ const fetchUsers = async () => {
   loading.value = true;
   const minTimer = new Promise(resolve => setTimeout(resolve, 600));
   try {
-    const { data } = await api.get('/users');
+    const data: any = await api.get('/users');
     users.value = data;
     await minTimer;
-  } catch (error) {
-    toast.error('获取用户列表失败');
+  } catch (error: any) {
+    toast.error('获取用户列表失败', error.message);
   } finally {
     loading.value = false;
   }
@@ -405,8 +405,8 @@ const saveEdit = async () => {
     toast.success('用户更新成功');
     closeEdit();
     fetchUsers();
-  } catch (error) {
-    toast.error('更新用户失败');
+  } catch (error: any) {
+    toast.error('更新用户失败', error.message);
     console.error(error);
   }
 };
@@ -438,8 +438,8 @@ const savePassword = async () => {
     });
     toast.success('密码重置成功');
     closePassword();
-  } catch (error) {
-    toast.error('重置密码失败');
+  } catch (error: any) {
+    toast.error('重置密码失败', error.message);
     console.error(error);
   }
 };
@@ -456,8 +456,8 @@ const handleDelete = async () => {
     toast.success('用户已删除');
     showDeleteModal.value = false;
     fetchUsers();
-  } catch (error) {
-    toast.error('删除用户失败');
+  } catch (error: any) {
+    toast.error('删除用户失败', error.message);
     console.error(error);
   }
 };
