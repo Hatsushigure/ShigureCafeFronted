@@ -40,6 +40,22 @@
                       </span>
                     </dd>
                   </div>
+
+                  <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">账户状态</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                      <span :class="[
+                        'px-2 inline-flex text-xs leading-5 font-semibold rounded-full',
+                        auth.user?.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 
+                        auth.user?.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' : 
+                        'bg-red-100 text-red-800'
+                      ]">
+                        {{ auth.user?.status === 'ACTIVE' ? '正常' : 
+                           auth.user?.status === 'PENDING' ? '待审核' : 
+                           auth.user?.status === 'BANNED' ? '封禁' : auth.user?.status }}
+                      </span>
+                    </dd>
+                  </div>
                 </dl>
               </div>
             </div>
@@ -117,26 +133,23 @@ const sendCode = async () => {
 
     sending.value = true;
     
-    // Optimistic UI: Show success message immediately
-    toastStore.success('发送成功', '验证码已发送至您的新邮箱，请注意查收。');
-    countdown.value = 60;
-    const timer = setInterval(() => {
-        countdown.value--;
-        if (countdown.value <= 0) {
-            clearInterval(timer);
-            sending.value = false; // Re-enable button after countdown
-        }
-    }, 1000);
-
     try {
         await api.post('/auth/verification-codes', { email: newEmailForm.value.newEmail, type: 'UPDATE_EMAIL' });
-        // No success message here as we've already shown it.
+        
+        toastStore.success('发送成功', '验证码已发送至您的新邮箱，请注意查收。');
+        countdown.value = 60;
+        const timer = setInterval(() => {
+            countdown.value--;
+            if (countdown.value <= 0) {
+                clearInterval(timer);
+                sending.value = false; // Re-enable button after countdown
+            }
+        }, 1000);
     } catch (e: any) {
         // Show error only on failure
         toastStore.error('发送失败', e.response?.data?.message || '请求失败，请稍后重试');
-        countdown.value = 0; // Reset countdown on error
+        sending.value = false;
     } 
-    // `sending` is managed by the timer now
 };
 
 const handleUpdateEmail = async () => {

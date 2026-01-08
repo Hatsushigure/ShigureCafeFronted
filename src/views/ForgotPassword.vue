@@ -67,21 +67,22 @@ const sendCode = async () => {
 
   // Optimistic UI
   sending.value = true;
-  toastStore.success('发送成功', '验证码已发送至您的邮箱，请注意查收。');
-  countdown.value = 60;
-  const timer = setInterval(() => {
-    countdown.value--;
-    if (countdown.value <= 0) {
-      clearInterval(timer);
-      sending.value = false;
-    }
-  }, 1000);
 
   try {
     await api.post('/auth/verification-codes', { email: form.value.email, type: 'RESET_PASSWORD' });
+
+    toastStore.success('发送成功', '验证码已发送至您的邮箱，请注意查收。');
+    countdown.value = 60;
+    const timer = setInterval(() => {
+      countdown.value--;
+      if (countdown.value <= 0) {
+        clearInterval(timer);
+        sending.value = false;
+      }
+    }, 1000);
   } catch (e: any) {
     toastStore.error('发送失败', e.response?.data?.message || '请求失败，请稍后重试');
-    countdown.value = 0;
+    sending.value = false;
   }
 };
 
