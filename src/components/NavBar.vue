@@ -64,6 +64,18 @@
                     >
                       审核管理
                     </router-link>
+                    <router-link
+                      v-if="auth.user?.role === 'ADMIN'"
+                      to="/admin/notices"
+                      class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-200"
+                      :class="[
+                        $route.path === '/admin/notices'
+                          ? 'border-blue-500 text-gray-900'
+                          : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 hover:-translate-y-0.5'
+                      ]"
+                    >
+                      公告管理
+                    </router-link>
                   </div>
                 </div>
                 <div class="flex items-center">
@@ -161,6 +173,19 @@
                     ]"
                   >
                     审核管理
+                  </router-link>
+                  <router-link
+                    v-if="auth.user?.role === 'ADMIN'"
+                    to="/admin/notices"
+                    @click="isOpen = false"
+                    class="block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-150 ease-in-out"
+                    :class="[
+                      $route.path === '/admin/notices'
+                        ? 'bg-blue-50 border-blue-500 text-blue-700'
+                        : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'
+                    ]"
+                  >
+                    公告管理
                   </router-link>
                   <button @click="handleLogoutAndClose" class="block w-full text-left pl-3 pr-4 py-2 border-l-4 text-base font-medium border-transparent text-red-600 hover:bg-red-50 hover:border-red-300 transition-colors duration-150 ease-in-out">
                     退出登录

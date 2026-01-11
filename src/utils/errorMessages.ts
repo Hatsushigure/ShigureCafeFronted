@@ -33,6 +33,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
     'INTERNAL_SERVER_ERROR': '服务器内部错误',
     'METHOD_NOT_ALLOWED': '请求方法不允许',
     'DATA_INTEGRITY_VIOLATION': '数据完整性冲突',
+    'NOTICE_NOT_FOUND': '公告不存在',
 };
 
 export const getErrorMessage = (code: string, metadata?: any): string => {

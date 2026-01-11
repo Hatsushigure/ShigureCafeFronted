@@ -8,6 +8,7 @@ import Profile from '../views/Profile.vue';
 import Security from '../views/Security.vue';
 import AdminUsers from '../views/AdminUsers.vue';
 import AdminAudits from '../views/AdminAudits.vue';
+import AdminNotices from '../views/AdminNotices.vue';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -58,6 +59,12 @@ const router = createRouter({
       path: '/admin/audits', 
       name: 'AdminAudits', 
       component: AdminAudits,
+      meta: { requiresAuth: true, requiresAdmin: true }
+    },
+    { 
+      path: '/admin/notices', 
+      name: 'AdminNotices', 
+      component: AdminNotices,
       meta: { requiresAuth: true, requiresAdmin: true }
     },
     { path: '/', redirect: '/dashboard' }, // Redirect to dashboard, guard will handle if not logged in
