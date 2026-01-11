@@ -92,23 +92,15 @@ import BaseCard from '../components/BaseCard.vue';
 import BaseButton from '../components/BaseButton.vue';
 import BaseInput from '../components/BaseInput.vue';
 import api from '../api';
+import { useNoticeStore } from '../stores/notice';
 import { useToastStore } from '../stores/toast';
 import { ArrowLeft, Save, Loader2, ArrowUpToLine } from 'lucide-vue-next';
 import { marked } from 'marked';
 
-interface Notice {
-  id: number;
-  title: string;
-  content: string;
-  pinned: boolean;
-  authorNickname: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 const route = useRoute();
 const router = useRouter();
 const toast = useToastStore();
+const noticeStore = useNoticeStore();
 
 const id = computed(() => route.params.id as string);
 const isEdit = computed(() => !!id.value && id.value !== 'new');
@@ -130,7 +122,7 @@ const fetchNotice = async () => {
   
   loading.value = true;
   try {
-    const data = await api.get<Notice>(`/notices/${id.value}`);
+    const data = await noticeStore.fetchNoticeById(Number(id.value));
     form.value.title = data.title;
     form.value.content = data.content;
     form.value.pinned = data.pinned;
@@ -157,6 +149,7 @@ const saveNotice = async () => {
       await api.post('/notices', form.value);
       toast.success('公告发布成功');
     }
+    await noticeStore.fetchNotices();
     router.push('/admin/notices');
   } catch (error: any) {
     toast.error('保存失败', error.message);

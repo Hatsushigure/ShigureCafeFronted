@@ -87,31 +87,29 @@
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
+import { useNoticeStore, type Notice } from '../stores/notice';
 import NavBar from '../components/NavBar.vue';
 import BaseCard from '../components/BaseCard.vue';
-import api from '../api';
 import { Loader2, ArrowLeft, Edit2 } from 'lucide-vue-next';
 import { marked } from 'marked';
 
-interface Notice {
-  id: number;
-  title: string;
-  content: string;
-  pinned: boolean;
-  authorNickname: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 const route = useRoute();
 const auth = useAuthStore();
+const noticeStore = useNoticeStore();
 const notice = ref<Notice | null>(null);
 const loading = ref(true);
 
 const fetchNotice = async () => {
-  const id = route.params.id;
+  const id = Number(route.params.id);
+  // Try to get from store first
+  const cached = noticeStore.getNoticeById(id);
+  if (cached) {
+    notice.value = cached;
+    loading.value = false;
+  }
+
   try {
-    const data = await api.get<Notice>(`/notices/${id}`);
+    const data = await noticeStore.fetchNoticeById(id);
     notice.value = data;
   } catch (error) {
     console.error('Failed to fetch notice', error);

@@ -13,8 +13,8 @@
               <Plus class="h-4 w-4 mr-2" />
               发布公告
             </BaseButton>
-            <BaseButton variant="secondary" @click="fetchNotices" :loading="loading" class="animate-slide-up animate-delay-50">
-              <RotateCw v-if="!loading" class="h-4 w-4 mr-2" />
+            <BaseButton variant="secondary" @click="fetchNotices" :loading="noticeStore.loading" class="animate-slide-up animate-delay-50">
+              <RotateCw v-if="!noticeStore.loading" class="h-4 w-4 mr-2" />
               刷新
             </BaseButton>
           </div>
@@ -27,12 +27,12 @@
             
             <BaseCard body-class="p-0 overflow-hidden">
               <!-- Loading State -->
-              <div v-if="loading && notices.length === 0" class="p-12 flex justify-center items-center text-gray-400">
+              <div v-if="noticeStore.loading && noticeStore.notices.length === 0" class="p-12 flex justify-center items-center text-gray-400">
                 <Loader2 class="h-8 w-8 animate-spin" />
               </div>
 
               <!-- Empty State -->
-              <div v-else-if="notices.length === 0" class="p-12 text-center text-gray-500 flex flex-col items-center">
+              <div v-else-if="noticeStore.notices.length === 0" class="p-12 text-center text-gray-500 flex flex-col items-center">
                 <Megaphone class="h-12 w-12 text-gray-300 mb-3" />
                 <p>暂无公告数据</p>
               </div>
@@ -50,13 +50,15 @@
                     </tr>
                   </thead>
                   <tbody class="bg-white divide-y divide-gray-100">
-                    <tr v-for="notice in notices" :key="notice.id" class="hover:bg-gray-50/80 transition-colors duration-150">
+                    <tr v-for="notice in noticeStore.notices" :key="notice.id" class="hover:bg-gray-50/80 transition-colors duration-150">
                       <td class="px-6 py-4 whitespace-nowrap">
                         <div class="flex items-center">
                           <span v-if="notice.pinned" class="mr-2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-orange-100 text-orange-700 rounded-md">
                             置顶
                           </span>
-                          <div class="text-sm font-medium text-gray-900">{{ notice.title }}</div>
+                          <div class="text-sm font-medium text-gray-900 truncate max-w-[200px]" :title="notice.title">
+                            {{ notice.title.length > 30 ? notice.title.substring(0, 30) + '...' : notice.title }}
+                          </div>
                         </div>
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -115,36 +117,22 @@ import BaseCard from '../components/BaseCard.vue';
 import BaseButton from '../components/BaseButton.vue';
 import Modal from '../components/Modal.vue';
 import api from '../api';
+import { useNoticeStore, type Notice } from '../stores/notice';
 import { useToastStore } from '../stores/toast';
 import { Plus, RotateCw, Loader2, Megaphone, Edit2, Trash2 } from 'lucide-vue-next';
 
-interface Notice {
-  id: number;
-  title: string;
-  content: string;
-  pinned: boolean;
-  authorNickname: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-const notices = ref<Notice[]>([]);
-const loading = ref(false);
+const noticeStore = useNoticeStore();
 const showDeleteModal = ref(false);
 const selectedNotice = ref<Notice | null>(null);
 const toast = useToastStore();
 
 const fetchNotices = async () => {
-  loading.value = true;
   const minTimer = new Promise(resolve => setTimeout(resolve, 600));
   try {
-    const data = await api.get<Notice[]>('/notices');
-    notices.value = data;
+    await noticeStore.fetchNotices();
     await minTimer;
   } catch (error: any) {
     toast.error('获取公告失败', error.message);
-  } finally {
-    loading.value = false;
   }
 };
 

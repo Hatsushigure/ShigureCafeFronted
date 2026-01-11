@@ -168,7 +168,7 @@
                </router-link>
              </div>
              
-             <div v-if="loadingNotices" class="bg-white shadow rounded-2xl p-12 flex justify-center items-center text-gray-400 animate-slide-up" :class="getNoticeDelay(0)">
+             <div v-if="noticeStore.loading && noticeStore.notices.length === 0" class="bg-white shadow rounded-2xl p-12 flex justify-center items-center text-gray-400 animate-slide-up" :class="getNoticeDelay(0)">
                 <Loader2 class="h-8 w-8 animate-spin" />
              </div>
              <div v-else-if="displayedNotices.length === 0" class="bg-white shadow rounded-2xl p-12 text-center text-gray-500 animate-slide-up" :class="getNoticeDelay(0)">
@@ -238,30 +238,19 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue';
 import { useAuthStore } from '../stores/auth';
+import { useNoticeStore } from '../stores/notice';
 import NavBar from '../components/NavBar.vue';
 import BaseCard from '../components/BaseCard.vue';
-import api from '../api';
 import { Loader2, ChevronRight, Edit2 } from 'lucide-vue-next';
 import { marked } from 'marked';
 
-interface Notice {
-  id: number;
-  title: string;
-  content: string;
-  pinned: boolean;
-  authorNickname: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 const auth = useAuthStore();
-const notices = ref<Notice[]>([]);
+const noticeStore = useNoticeStore();
 const pageLoading = ref(true);
-const loadingNotices = ref(true);
 
 const displayedNotices = computed(() => {
-  const pinned = notices.value.filter(n => n.pinned);
-  const unpinned = notices.value.filter(n => !n.pinned).slice(0, 3);
+  const pinned = noticeStore.notices.filter(n => n.pinned);
+  const unpinned = noticeStore.notices.filter(n => !n.pinned).slice(0, 3);
   return [...pinned, ...unpinned];
 });
 
@@ -282,17 +271,6 @@ const getNoticeDelay = (index: number) => {
   return `animate-delay-${itemDelay}`;
 };
 
-const fetchNotices = async () => {
-  try {
-    const data = await api.get<Notice[]>('/notices');
-    notices.value = data;
-  } catch (error) {
-    console.error('Failed to fetch notices', error);
-  } finally {
-    loadingNotices.value = false;
-  }
-};
-
 const renderMarkdown = (content: string) => {
   return marked.parse(content);
 };
@@ -306,7 +284,7 @@ onMounted(async () => {
     console.error('Failed to fetch user', error);
   } finally {
     pageLoading.value = false;
-    fetchNotices();
+    noticeStore.fetchNotices();
   }
 });
 </script>

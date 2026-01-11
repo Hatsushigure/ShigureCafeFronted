@@ -14,21 +14,21 @@
             </h1>
           </div>
           <div class="text-sm text-gray-500 animate-slide-up animate-delay-50">
-            共 {{ notices.length }} 条公告
+            共 {{ noticeStore.notices.length }} 条公告
           </div>
         </div>
       </header>
       <main>
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 mt-8">
           <div class="px-4 sm:px-0 animate-slide-up animate-delay-100">
-             <div v-if="loading" class="bg-white shadow rounded-2xl p-12 flex justify-center items-center text-gray-400">
+             <div v-if="noticeStore.loading && noticeStore.notices.length === 0" class="bg-white shadow rounded-2xl p-12 flex justify-center items-center text-gray-400">
                 <Loader2 class="h-8 w-8 animate-spin" />
              </div>
-             <div v-else-if="notices.length === 0" class="bg-white shadow rounded-2xl p-12 text-center text-gray-500">
+             <div v-else-if="noticeStore.notices.length === 0" class="bg-white shadow rounded-2xl p-12 text-center text-gray-500">
                 <p>暂无公告</p>
              </div>
              <div v-else class="space-y-6">
-                <div v-for="(notice, index) in notices" :key="notice.id"
+                <div v-for="(notice, index) in noticeStore.notices" :key="notice.id"
                   class="animate-slide-up"
                   :style="{ animationDelay: `${(index + 3) * 50}ms` }"
                 >
@@ -88,38 +88,16 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted } from 'vue';
 import { useAuthStore } from '../stores/auth';
+import { useNoticeStore } from '../stores/notice';
 import NavBar from '../components/NavBar.vue';
 import BaseCard from '../components/BaseCard.vue';
-import api from '../api';
 import { Loader2, ArrowLeft, ChevronRight, Edit2 } from 'lucide-vue-next';
 import { marked } from 'marked';
 
-interface Notice {
-  id: number;
-  title: string;
-  content: string;
-  pinned: boolean;
-  authorNickname: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 const auth = useAuthStore();
-const notices = ref<Notice[]>([]);
-const loading = ref(true);
-
-const fetchNotices = async () => {
-  try {
-    const data = await api.get<Notice[]>('/notices');
-    notices.value = data;
-  } catch (error) {
-    console.error('Failed to fetch notices', error);
-  } finally {
-    loading.value = false;
-  }
-};
+const noticeStore = useNoticeStore();
 
 const renderMarkdown = (content: string) => {
   return marked.parse(content);
@@ -129,6 +107,6 @@ onMounted(async () => {
   if (!auth.user) {
     await auth.fetchCurrentUser();
   }
-  fetchNotices();
+  noticeStore.fetchNotices();
 });
 </script>

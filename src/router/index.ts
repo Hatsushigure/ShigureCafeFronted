@@ -17,6 +17,7 @@ import AuthWrapper from '../views/AuthWrapper.vue';
 const router = createRouter({
   history: createWebHistory(),
   routes: [
+    { path: '/', redirect: '/dashboard' },
     {
       path: '/',
       component: AuthWrapper,
@@ -101,7 +102,6 @@ const router = createRouter({
       component: AdminNotices,
       meta: { requiresAuth: true, requiresAdmin: true }
     },
-    { path: '/', redirect: '/dashboard' }, // Redirect to dashboard, guard will handle if not logged in
     { path: '/:pathMatch(.*)*', redirect: '/' }
   ],
 });
