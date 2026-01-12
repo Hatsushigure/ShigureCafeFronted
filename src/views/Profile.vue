@@ -14,6 +14,31 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 mt-8">
           <div class="px-4 sm:px-0 animate-slide-up animate-delay-50">
             <BaseCard title="基本资料" subtitle="您的个人账户详情与状态。">
+              <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 mb-8 pb-8 border-b border-gray-100">
+                <div 
+                  :class="[avatarColor, 'w-24 h-24 rounded-full flex items-center justify-center text-white text-4xl font-bold shadow-md border-4 border-white ring-4 ring-gray-50 flex-shrink-0']"
+                >
+                  {{ avatarChar }}
+                </div>
+                <div class="text-center sm:text-left">
+                  <h2 class="text-2xl font-bold text-gray-900">{{ auth.user?.nickname || auth.user?.username }}</h2>
+                  <p class="text-gray-500">{{ auth.user?.email }}</p>
+                  <div class="mt-2 flex flex-wrap justify-center sm:justify-start gap-2">
+                    <span class="px-2.5 py-0.5 inline-flex text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                      {{ formatRole(auth.user?.role) }}
+                    </span>
+                    <span :class="[
+                      'px-2.5 py-0.5 inline-flex text-xs font-medium rounded-full',
+                      auth.user?.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 
+                      auth.user?.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' : 
+                      'bg-red-100 text-red-800'
+                    ]">
+                      {{ formatStatus(auth.user?.status) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               <dl class="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
                 <div class="sm:col-span-1">
                   <dt class="text-sm font-medium text-gray-500">用户名</dt>
@@ -91,7 +116,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useToastStore } from '../stores/toast';
 import NavBar from '../components/NavBar.vue';
@@ -104,6 +129,25 @@ import { formatStatus, formatRole } from '../utils/formatters';
 
 const auth = useAuthStore();
 const toastStore = useToastStore();
+
+const avatarChar = computed(() => {
+  const name = auth.user?.nickname || auth.user?.username || '?';
+  return name.charAt(0).toUpperCase();
+});
+
+const avatarColor = computed(() => {
+  const name = auth.user?.nickname || auth.user?.username || '';
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const colors = [
+    'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-red-500',
+    'bg-indigo-500', 'bg-purple-500', 'bg-pink-500', 'bg-teal-500',
+    'bg-orange-500', 'bg-cyan-500'
+  ];
+  return colors[Math.abs(hash) % colors.length];
+});
 
 // Nickname Update Logic
 const showNicknameModal = ref(false);

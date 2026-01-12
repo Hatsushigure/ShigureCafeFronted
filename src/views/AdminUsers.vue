@@ -54,8 +54,10 @@
                         <tr v-for="user in users" :key="user.username" class="hover:bg-gray-50/80 transition-colors duration-150">
                           <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
-                              <div class="h-8 w-8 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center text-blue-600 font-bold text-xs">
-                                {{ (user.nickname || user.username).substring(0, 2).toUpperCase() }}
+                              <div 
+                                :class="[getAvatarColor(user), 'h-9 w-9 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm border-2 border-white ring-2 ring-gray-50 flex-shrink-0']"
+                              >
+                                {{ getAvatarChar(user) }}
                               </div>
                               <div class="ml-3">
                                 <div class="text-sm font-medium text-gray-900">{{ user.username }}</div>
@@ -142,7 +144,7 @@
                 leave-from-class="opacity-100 scale-100 translate-y-0"
                 leave-to-class="opacity-0 scale-95 -translate-y-2"
               >
-                <div v-if="showRoleDropdown" class="absolute z-60 mt-1 w-full bg-white/90 backdrop-blur-lg shadow-xl max-h-60 rounded-xl py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm border border-gray-100">
+                <div v-if="showRoleDropdown" class="absolute z-60 mt-1 w-full bg-white/95 backdrop-blur-lg shadow-xl max-h-60 rounded-xl py-1 text-base overflow-auto focus:outline-none sm:text-sm border border-gray-100">
                   <div 
                     v-for="role in ['USER', 'ADMIN']" 
                     :key="role"
@@ -275,6 +277,25 @@ const selectedUser = ref<User | null>(null);
 const loading = ref(false);
 const toast = useToastStore();
 const auth = useAuthStore();
+
+const getAvatarChar = (user: User) => {
+  const name = user.nickname || user.username || '?';
+  return name.charAt(0).toUpperCase();
+};
+
+const getAvatarColor = (user: User) => {
+  const name = user.nickname || user.username || '';
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const colors = [
+    'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-red-500',
+    'bg-indigo-500', 'bg-purple-500', 'bg-pink-500', 'bg-teal-500',
+    'bg-orange-500', 'bg-cyan-500'
+  ];
+  return colors[Math.abs(hash) % colors.length];
+};
 
 const editForm = ref({
   nickname: '',
