@@ -11,17 +11,30 @@ export interface Notice {
   updatedAt: string;
 }
 
+export interface PaginatedNotices {
+  content: Notice[];
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  number: number;
+}
+
 export const useNoticeStore = defineStore('notice', {
   state: () => ({
-    notices: JSON.parse(localStorage.getItem('cached_notices') || '[]') as Notice[],
+    notices: [] as Notice[],
     loading: false,
     lastUpdated: localStorage.getItem('notices_last_updated') || null,
+    totalPages: 0,
+    totalElements: 0,
+    currentPage: 0,
+    pageSize: 10,
   }),
   getters: {
     getNoticeById: (state) => (id: number) => {
       return state.notices.find(n => n.id === id);
     },
     sortedNotices: (state) => {
+      // The backend already sorts by pinned and createdAt, but we keep this for safety
       return [...state.notices].sort((a, b) => {
         if (a.pinned && !b.pinned) return -1;
         if (!a.pinned && b.pinned) return 1;
@@ -30,14 +43,22 @@ export const useNoticeStore = defineStore('notice', {
     }
   },
   actions: {
-    async fetchNotices() {
+    async fetchNotices(page = 0, size = 10) {
       this.loading = true;
       try {
-        const data = await api.get<Notice[]>('/notices');
-        this.notices = data;
+        const response = await api.get<PaginatedNotices>(`/notices?page=${page}&size=${size}&t=${Date.now()}`);
+        this.notices = response.content;
+        this.totalPages = response.totalPages;
+        this.totalElements = response.totalElements;
+        this.currentPage = response.number;
+        this.pageSize = response.size;
+        
         this.lastUpdated = new Date().toISOString();
-        localStorage.setItem('cached_notices', JSON.stringify(data));
-        localStorage.setItem('notices_last_updated', this.lastUpdated);
+        // We only cache the first page for the landing page preview if needed
+        if (page === 0) {
+          localStorage.setItem('cached_notices', JSON.stringify(response.content));
+          localStorage.setItem('notices_last_updated', this.lastUpdated);
+        }
       } catch (error) {
         console.error('Failed to fetch notices', error);
         throw error;

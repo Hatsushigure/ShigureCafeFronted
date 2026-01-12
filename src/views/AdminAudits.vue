@@ -76,102 +76,105 @@
 
       <main>
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 mt-8">
-          <div class="px-4 sm:px-0 animate-slide-up animate-delay-100">
-            
-            <BaseCard body-class="p-0 overflow-hidden">
-              <!-- Loading State -->
-              <div v-if="loading && audits.length === 0" class="p-12 flex justify-center items-center text-gray-400">
-                <Loader2 class="h-8 w-8 animate-spin" />
-              </div>
+          <div class="px-4 sm:px-0">
+            <Transition name="fade-slide" mode="out-in">
+              <div :key="loading ? 'loading' : (filteredAudits.length > 0 ? 'data' : 'empty')">
+                <BaseCard body-class="p-0 overflow-hidden">
+                  <!-- Loading State -->
+                  <div v-if="loading" class="p-12 flex justify-center items-center text-gray-400">
+                    <Loader2 class="h-8 w-8 animate-spin" />
+                  </div>
 
-              <!-- Empty State -->
-              <div v-else-if="filteredAudits.length === 0" class="p-12 text-center text-gray-500 flex flex-col items-center">
-                <ClipboardList class="h-12 w-12 text-gray-300 mb-3" />
-                <p>{{ searchQuery ? '未找到匹配的记录' : '暂无待审核用户' }}</p>
-              </div>
+                  <!-- Empty State -->
+                  <div v-else-if="filteredAudits.length === 0" class="p-12 text-center text-gray-500 flex flex-col items-center">
+                    <ClipboardList class="h-12 w-12 text-gray-300 mb-3" />
+                    <p>{{ searchQuery ? '未找到匹配的记录' : '暂无待审核用户' }}</p>
+                  </div>
 
-              <!-- Audits Table -->
-              <div v-else class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                  <thead class="bg-gray-50/50">
-                    <tr>
-                      <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户名</th>
-                      <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">电子邮箱</th>
-                      <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">审核码</th>
-                      <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
-                      <th scope="col" class="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                    </tr>
-                  </thead>
-                  <tbody class="bg-white divide-y divide-gray-100">
-                    <tr v-for="audit in filteredAudits" :key="audit.auditCode" class="hover:bg-gray-50/80 transition-colors duration-150">
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                          <div class="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-xs mr-3">
-                            {{ (audit.nickname || audit.username).substring(0, 2).toUpperCase() }}
-                          </div>
-                          <div>
-                            <div class="text-sm font-medium text-gray-900">{{ audit.nickname || audit.username }}</div>
-                            <div class="text-xs text-gray-400">@{{ audit.username }}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {{ audit.email }}
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                         <div class="flex items-center space-x-2">
-                           <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-gray-100 text-gray-800 font-mono">
-                             {{ audit.auditCode }}
-                           </span>
-                           <button 
-                             @click="copyToClipboard(audit.auditCode)" 
-                             class="p-1 hover:bg-gray-200 rounded text-gray-400 hover:text-gray-600 transition-colors" 
-                             title="复制审核码"
-                           >
-                             <Copy class="h-3.5 w-3.5" />
-                           </button>
-                         </div>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <span 
-                          class="px-2.5 py-0.5 inline-flex text-xs font-medium rounded-full"
-                          :class="{
-                            'bg-green-100 text-green-800': audit.status === 'ACTIVE',
-                            'bg-yellow-100 text-yellow-800': audit.status === 'PENDING',
-                            'bg-red-100 text-red-800': audit.status === 'BANNED',
-                            'bg-gray-100 text-gray-800': audit.isExpired
-                          }"
-                        >
-                          {{ audit.isExpired ? '已过期' : formatStatus(audit.status) }}
-                        </span>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <BaseButton 
-                          v-if="!audit.isExpired && audit.status !== 'ACTIVE'"
-                          @click="confirmApprove(audit)" 
-                          label="通过"
-                          class="inline-flex items-center px-3 py-1.5 text-xs rounded-full"
-                        >
-                          <CheckCircle class="h-3.5 w-3.5 mr-1" />
-                        </BaseButton>
-                        <BaseButton 
-                          v-if="!audit.isExpired && audit.status !== 'ACTIVE' && audit.status !== 'BANNED'"
-                          variant="danger"
-                          @click="confirmBan(audit)" 
-                          label="封禁"
-                          class="ml-2 inline-flex items-center px-3 py-1.5 text-xs rounded-full"
-                        >
-                          <Ban class="h-3.5 w-3.5 mr-1" />
-                        </BaseButton>
-                        <span v-else class="text-gray-400 text-xs italic">
-                          无需操作
-                        </span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                  <!-- Audits Table -->
+                  <div v-else class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                      <thead class="bg-gray-50/50">
+                        <tr>
+                          <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户名</th>
+                          <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">电子邮箱</th>
+                          <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">审核码</th>
+                          <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                          <th scope="col" class="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                        </tr>
+                      </thead>
+                      <tbody class="bg-white divide-y divide-gray-100">
+                        <tr v-for="audit in filteredAudits" :key="audit.auditCode" class="hover:bg-gray-50/80 transition-colors duration-150">
+                          <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                              <div class="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-xs mr-3">
+                                {{ (audit.nickname || audit.username).substring(0, 2).toUpperCase() }}
+                              </div>
+                              <div>
+                                <div class="text-sm font-medium text-gray-900">{{ audit.nickname || audit.username }}</div>
+                                <div class="text-xs text-gray-400">@{{ audit.username }}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ audit.email }}
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap">
+                             <div class="flex items-center space-x-2">
+                               <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-gray-100 text-gray-800 font-mono">
+                                 {{ audit.auditCode }}
+                               </span>
+                               <button 
+                                 @click="copyToClipboard(audit.auditCode)" 
+                                 class="p-1 hover:bg-gray-200 rounded text-gray-400 hover:text-gray-600 transition-colors" 
+                                 title="复制审核码"
+                               >
+                                 <Copy class="h-3.5 w-3.5" />
+                               </button>
+                             </div>
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap">
+                            <span 
+                              class="px-2.5 py-0.5 inline-flex text-xs font-medium rounded-full"
+                              :class="{
+                                'bg-green-100 text-green-800': audit.status === 'ACTIVE',
+                                'bg-yellow-100 text-yellow-800': audit.status === 'PENDING',
+                                'bg-red-100 text-red-800': audit.status === 'BANNED',
+                                'bg-gray-100 text-gray-800': audit.isExpired
+                              }"
+                            >
+                              {{ audit.isExpired ? '已过期' : formatStatus(audit.status) }}
+                            </span>
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <BaseButton 
+                              v-if="!audit.isExpired && audit.status !== 'ACTIVE'"
+                              @click="confirmApprove(audit)" 
+                              label="通过"
+                              class="inline-flex items-center px-3 py-1.5 text-xs rounded-full"
+                            >
+                              <CheckCircle class="h-3.5 w-3.5 mr-1" />
+                            </BaseButton>
+                            <BaseButton 
+                              v-if="!audit.isExpired && audit.status !== 'ACTIVE' && audit.status !== 'BANNED'"
+                              variant="danger"
+                              @click="confirmBan(audit)" 
+                              label="封禁"
+                              class="ml-2 inline-flex items-center px-3 py-1.5 text-xs rounded-full"
+                            >
+                              <Ban class="h-3.5 w-3.5 mr-1" />
+                            </BaseButton>
+                            <span v-else class="text-gray-400 text-xs italic">
+                              无需操作
+                            </span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </BaseCard>
               </div>
-            </BaseCard>
+            </Transition>
           </div>
         </div>
       </main>

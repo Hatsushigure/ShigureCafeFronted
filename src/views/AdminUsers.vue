@@ -22,92 +22,95 @@
       
       <main>
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 mt-8">
-          <div class="px-4 sm:px-0 animate-slide-up animate-delay-100">
-            
-            <BaseCard body-class="p-0 overflow-hidden">
-              <!-- Loading State -->
-              <div v-if="loading && users.length === 0" class="p-12 flex justify-center items-center text-gray-400">
-                <Loader2 class="h-8 w-8 animate-spin" />
-              </div>
+          <div class="px-4 sm:px-0">
+            <Transition name="fade-slide" mode="out-in">
+              <div :key="loading ? 'loading' : (users.length > 0 ? 'data' : 'empty')">
+                <BaseCard body-class="p-0 overflow-hidden">
+                  <!-- Loading State -->
+                  <div v-if="loading" class="p-12 flex justify-center items-center text-gray-400">
+                    <Loader2 class="h-8 w-8 animate-spin" />
+                  </div>
 
-              <!-- Empty State -->
-              <div v-else-if="users.length === 0" class="p-12 text-center text-gray-500 flex flex-col items-center">
-                <Users class="h-12 w-12 text-gray-300 mb-3" />
-                <p>暂无用户数据</p>
-              </div>
+                  <!-- Empty State -->
+                  <div v-else-if="users.length === 0" class="p-12 text-center text-gray-500 flex flex-col items-center">
+                    <Users class="h-12 w-12 text-gray-300 mb-3" />
+                    <p>暂无用户数据</p>
+                  </div>
 
-              <!-- Users Table -->
-              <div v-else class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                  <thead class="bg-gray-50/50">
-                    <tr>
-                      <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户 / 昵称</th>
-                      <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">电子邮箱</th>
-                      <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户角色</th>
-                      <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">双重验证</th>
-                      <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
-                      <th scope="col" class="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                    </tr>
-                  </thead>
-                  <tbody class="bg-white divide-y divide-gray-100">
-                    <tr v-for="user in users" :key="user.username" class="hover:bg-gray-50/80 transition-colors duration-150">
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                          <div class="h-8 w-8 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center text-blue-600 font-bold text-xs">
-                            {{ (user.nickname || user.username).substring(0, 2).toUpperCase() }}
-                          </div>
-                          <div class="ml-3">
-                            <div class="text-sm font-medium text-gray-900">{{ user.username }}</div>
-                            <div class="text-xs text-gray-500">{{ user.nickname || '未设置昵称' }}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.email }}</td>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <span :class="roleClass(user.role)" class="px-2.5 py-0.5 inline-flex text-xs font-medium rounded-full">
-                          {{ formatRole(user.role) }}
-                        </span>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <span :class="[
-                          'px-2.5 py-0.5 inline-flex text-xs font-medium rounded-full',
-                          user.twoFactorEnabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                        ]">
-                          {{ user.twoFactorEnabled ? '已开启' : '未开启' }}
-                        </span>
-                      </td>
-                       <td class="px-6 py-4 whitespace-nowrap">
-                        <span :class="[
-                          'px-2.5 py-0.5 inline-flex text-xs font-medium rounded-full',
-                          user.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 
-                          user.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' : 
-                          'bg-red-100 text-red-800'
-                        ]">
-                          {{ formatStatus(user.status) }}
-                        </span>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                        <button @click="openEdit(user)" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 p-1.5 rounded-md transition-colors" title="编辑用户">
-                          <Edit2 class="h-4 w-4" />
-                        </button>
-                        <button @click="openPassword(user)" class="text-orange-600 hover:text-orange-900 bg-orange-50 hover:bg-orange-100 p-1.5 rounded-md transition-colors" title="重置密码">
-                          <KeyRound class="h-4 w-4" />
-                        </button>
-                        <button v-if="user.username !== auth.user?.username && user.status !== 'BANNED'" @click="confirmBan(user)" class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-1.5 rounded-md transition-colors" title="封禁用户">
-                          <Ban class="h-4 w-4" />
-                        </button>
-                        <button v-if="user.status === 'BANNED'" @click="confirmPardon(user)" class="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 p-1.5 rounded-md transition-colors" title="解除封禁">
-                          <UserCheck class="h-4 w-4" />
-                        </button>
-                        <button v-if="user.username !== auth.user?.username" @click="confirmDelete(user)" class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-1.5 rounded-md transition-colors" title="删除用户">
-                          <Trash2 class="h-4 w-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                  <!-- Users Table -->
+                  <div v-else class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                      <thead class="bg-gray-50/50">
+                        <tr>
+                          <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户 / 昵称</th>
+                          <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">电子邮箱</th>
+                          <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户角色</th>
+                          <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">双重验证</th>
+                          <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                          <th scope="col" class="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                        </tr>
+                      </thead>
+                      <tbody class="bg-white divide-y divide-gray-100">
+                        <tr v-for="user in users" :key="user.username" class="hover:bg-gray-50/80 transition-colors duration-150">
+                          <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                              <div class="h-8 w-8 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center text-blue-600 font-bold text-xs">
+                                {{ (user.nickname || user.username).substring(0, 2).toUpperCase() }}
+                              </div>
+                              <div class="ml-3">
+                                <div class="text-sm font-medium text-gray-900">{{ user.username }}</div>
+                                <div class="text-xs text-gray-500">{{ user.nickname || '未设置昵称' }}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.email }}</td>
+                          <td class="px-6 py-4 whitespace-nowrap">
+                            <span :class="roleClass(user.role)" class="px-2.5 py-0.5 inline-flex text-xs font-medium rounded-full">
+                              {{ formatRole(user.role) }}
+                            </span>
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap">
+                            <span :class="[
+                              'px-2.5 py-0.5 inline-flex text-xs font-medium rounded-full',
+                              user.twoFactorEnabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                            ]">
+                              {{ user.twoFactorEnabled ? '已开启' : '未开启' }}
+                            </span>
+                          </td>
+                           <td class="px-6 py-4 whitespace-nowrap">
+                            <span :class="[
+                              'px-2.5 py-0.5 inline-flex text-xs font-medium rounded-full',
+                              user.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 
+                              user.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' : 
+                              'bg-red-100 text-red-800'
+                            ]">
+                              {{ formatStatus(user.status) }}
+                            </span>
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                            <button @click="openEdit(user)" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 p-1.5 rounded-md transition-colors" title="编辑用户">
+                              <Edit2 class="h-4 w-4" />
+                            </button>
+                            <button @click="openPassword(user)" class="text-orange-600 hover:text-orange-900 bg-orange-50 hover:bg-orange-100 p-1.5 rounded-md transition-colors" title="重置密码">
+                              <KeyRound class="h-4 w-4" />
+                            </button>
+                            <button v-if="user.username !== auth.user?.username && user.status !== 'BANNED'" @click="confirmBan(user)" class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-1.5 rounded-md transition-colors" title="封禁用户">
+                              <Ban class="h-4 w-4" />
+                            </button>
+                            <button v-if="user.status === 'BANNED'" @click="confirmPardon(user)" class="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 p-1.5 rounded-md transition-colors" title="解除封禁">
+                              <UserCheck class="h-4 w-4" />
+                            </button>
+                            <button v-if="user.username !== auth.user?.username" @click="confirmDelete(user)" class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-1.5 rounded-md transition-colors" title="删除用户">
+                              <Trash2 class="h-4 w-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </BaseCard>
               </div>
-            </BaseCard>
+            </Transition>
           </div>
         </div>
       </main>
