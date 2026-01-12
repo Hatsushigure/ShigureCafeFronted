@@ -15,12 +15,14 @@ A modernized, high-performance user management interface for ShigureCafe, design
 *   **Interactive Notice Board:**
     *   **Markdown Rendering:** Full support for Markdown formatting in announcements.
     *   **Mathematical Support:** Integrated **KaTeX** for high-quality mathematical expression rendering.
+    *   **Emoji Reactions:** Interactive reaction system with an elegant emoji picker for user engagement.
     *   **Management Suite:** Administrative tools for creating, editing, pinning, and deleting notices.
 *   **Administrative Dashboard:**
     *   **User Management:** Real-time search, role editing, and account status control.
     *   **Audit Center:** Interface for tracking registration requests and managing user approval workflows.
     *   **Notice Management:** Dedicated editor for system-wide announcements with pinning capabilities.
 *   **User Tools:**
+    *   **Minecraft Integration:** Dedicated interface for binding Minecraft accounts via Microsoft OAuth2.
     *   Personalized Dashboard with quick-action cards.
     *   Profile customization (Nicknames, Security settings).
     *   Responsive Toast notification system.
