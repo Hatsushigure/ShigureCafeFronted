@@ -10,6 +10,8 @@
         ? 'text-blue-600 border-blue-200 bg-blue-50/50 hover:bg-blue-100 hover:border-blue-300 focus:ring-blue-500 shadow-sm'
         : variant === 'danger'
         ? 'text-red-700 border-red-200 bg-red-50 hover:bg-red-100 hover:border-red-300 focus:ring-red-500 shadow-sm'
+        : variant === 'warning'
+        ? 'text-yellow-700 border-yellow-200 bg-yellow-50 hover:bg-yellow-100 hover:border-yellow-300 focus:ring-yellow-500 shadow-sm'
         : variant === 'ghost'
         ? 'text-gray-500 border-transparent bg-transparent hover:bg-gray-100 hover:text-gray-700 focus:ring-gray-500'
         : variant === 'outline'
@@ -32,7 +34,7 @@
 <script setup lang="ts">
 interface Props {
   type?: 'button' | 'submit' | 'reset';
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline';
+  variant?: 'primary' | 'secondary' | 'danger' | 'warning' | 'ghost' | 'outline';
   disabled?: boolean;
   loading?: boolean;
   loadingText?: string;

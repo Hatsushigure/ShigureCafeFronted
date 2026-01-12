@@ -96,6 +96,9 @@
                             <button @click="openPassword(user)" class="text-orange-600 hover:text-orange-900 bg-orange-50 hover:bg-orange-100 p-1.5 rounded-md transition-colors" title="重置密码">
                               <KeyRound class="h-4 w-4" />
                             </button>
+                            <button v-if="user.twoFactorEnabled" @click="confirmReset2FA(user)" class="text-yellow-600 hover:text-yellow-900 bg-yellow-50 hover:bg-yellow-100 p-1.5 rounded-md transition-colors" title="重置双重验证">
+                              <ShieldOff class="h-4 w-4" />
+                            </button>
                             <button v-if="user.username !== auth.user?.username && user.status !== 'BANNED'" @click="confirmBan(user)" class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-1.5 rounded-md transition-colors" title="封禁用户">
                               <Ban class="h-4 w-4" />
                             </button>
@@ -221,6 +224,26 @@
         </template>
       </Modal>
 
+      <!-- Reset 2FA Confirmation Modal -->
+      <Modal :show="showReset2FAModal" title="重置双重验证" @close="showReset2FAModal = false">
+        <div class="sm:flex sm:items-center">
+          <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 sm:mx-0 sm:h-10 sm:w-10">
+            <ShieldOff class="h-6 w-6 text-yellow-600" />
+          </div>
+          <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+            <div class="mt-2">
+              <p class="text-sm text-gray-500">
+                您确定要重置用户 <span class="font-bold text-gray-900">{{ selectedUser?.username }}</span> 的双重验证吗？此操作将关闭该用户的所有双重验证方式（包括邮箱验证和身份验证器）。
+              </p>
+            </div>
+          </div>
+        </div>
+        <template #footer>
+          <BaseButton variant="warning" @click="handleReset2FA" label="确认重置" />
+          <BaseButton variant="outline" @click="showReset2FAModal = false" label="取消" />
+        </template>
+      </Modal>
+
       <!-- Pardon Confirmation Modal -->
       <Modal :show="showPardonModal" title="解除封禁" @close="showPardonModal = false">
         <div class="sm:flex sm:items-center">
@@ -254,7 +277,7 @@ import Modal from '../components/Modal.vue';
 import api from '../api';
 import { useToastStore } from '../stores/toast';
 import { useAuthStore } from '../stores/auth';
-import { Edit2, KeyRound, RotateCw, Loader2, Users, Trash2, ChevronDown, Check, Ban, UserCheck } from 'lucide-vue-next';
+import { Edit2, KeyRound, RotateCw, Loader2, Users, Trash2, ChevronDown, Check, Ban, UserCheck, ShieldOff } from 'lucide-vue-next';
 import { formatStatus, formatRole } from '../utils/formatters';
 
 interface User {
@@ -264,6 +287,8 @@ interface User {
   role: string;
   status: string;
   twoFactorEnabled: boolean;
+  email2faEnabled: boolean;
+  totpEnabled: boolean;
 }
 
 const users = ref<User[]>([]);
@@ -272,6 +297,7 @@ const showPasswordModal = ref(false);
 const showDeleteModal = ref(false);
 const showBanModal = ref(false);
 const showPardonModal = ref(false);
+const showReset2FAModal = ref(false);
 const showRoleDropdown = ref(false);
 const selectedUser = ref<User | null>(null);
 const loading = ref(false);
@@ -422,6 +448,24 @@ const handleBan = async () => {
     fetchUsers();
   } catch (error: any) {
     toast.error('封禁失败', error.message);
+    console.error(error);
+  }
+};
+
+const confirmReset2FA = (user: User) => {
+  selectedUser.value = user;
+  showReset2FAModal.value = true;
+};
+
+const handleReset2FA = async () => {
+  if (!selectedUser.value) return;
+  try {
+    await api.delete(`/users/${selectedUser.value.username}/2fa`);
+    toast.success('双重验证已重置');
+    showReset2FAModal.value = false;
+    fetchUsers();
+  } catch (error: any) {
+    toast.error('重置双重验证失败', error.message);
     console.error(error);
   }
 };

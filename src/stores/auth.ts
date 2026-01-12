@@ -8,6 +8,7 @@ interface User {
   email: string;
   role: string;
   status: string;
+  twoFactorEnabled: boolean;
   email2faEnabled: boolean;
   totpEnabled: boolean;
 }
