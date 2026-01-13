@@ -63,11 +63,12 @@
             <BaseButton 
               v-show="!isSearchExpanded"
               variant="secondary"
-              @click="fetchAudits" 
-              :loading="loading"
+              @click="fetchAudits(0)" 
+              :loading="adminAuditStore.loading"
               class="animate-slide-up animate-delay-50"
             >
-              <RotateCw v-if="!loading" class="h-4 w-4 sm:mr-2" />
+              <RotateCw v-if="!adminAuditStore.loading" class="h-4 w-4 sm:mr-2" />
+              <RotateCw v-else class="h-4 w-4 sm:mr-2 animate-spin" />
               <span class="hidden sm:inline">刷新列表</span>
             </BaseButton>
           </div>
@@ -78,10 +79,10 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 mt-8">
           <div class="px-4 sm:px-0">
             <Transition name="fade-slide" mode="out-in">
-              <div :key="loading ? 'loading' : (filteredAudits.length > 0 ? 'data' : 'empty')">
+              <div :key="adminAuditStore.audits.length > 0 ? 'data' : (adminAuditStore.loading ? 'loading' : 'empty')">
                 <BaseCard body-class="p-0 overflow-hidden">
-                  <!-- Loading State -->
-                  <div v-if="loading" class="p-12 flex justify-center items-center text-gray-400">
+                  <!-- Loading State (only if no cache) -->
+                  <div v-if="adminAuditStore.loading && adminAuditStore.audits.length === 0" class="p-12 flex justify-center items-center text-gray-400">
                     <Loader2 class="h-8 w-8 animate-spin" />
                   </div>
 
@@ -92,7 +93,12 @@
                   </div>
 
                   <!-- Audits Table -->
-                  <div v-else class="overflow-x-auto">
+                  <div v-else class="overflow-x-auto relative">
+                    <!-- Loading overlay for refresh -->
+                    <div v-if="adminAuditStore.loading" class="absolute inset-0 bg-white/40 backdrop-blur-[1px] z-10 flex items-center justify-center transition-all duration-300">
+                      <Loader2 class="h-8 w-8 animate-spin text-indigo-500" />
+                    </div>
+
                     <table class="min-w-full divide-y divide-gray-200">
                       <thead class="bg-gray-50/50">
                         <tr>
@@ -172,6 +178,18 @@
                       </tbody>
                     </table>
                   </div>
+
+                  <!-- Pagination -->
+                  <Pagination 
+                    v-if="filteredAudits.length > 0"
+                    :current-page="adminAuditStore.pagination.currentPage"
+                    :total-pages="adminAuditStore.pagination.totalPages"
+                    :total-elements="adminAuditStore.pagination.totalElements"
+                    :page-size="adminAuditStore.pagination.pageSize"
+                    :is-last="adminAuditStore.pagination.isLast"
+                    @page-change="handlePageChange"
+                    class="bg-gray-50/50 border-t border-gray-100"
+                  />
                 </BaseCard>
               </div>
             </Transition>
@@ -223,117 +241,225 @@
 </template>
 
 <script setup lang="ts">
+
 import { ref, onMounted, computed, watch, nextTick } from 'vue';
+
 import api from '../api';
+
 import NavBar from '../components/NavBar.vue';
+
 import BaseCard from '../components/BaseCard.vue';
+
 import BaseButton from '../components/BaseButton.vue';
+
 import Modal from '../components/Modal.vue';
+
+import Pagination from '../components/Pagination.vue';
+
 import { useToastStore } from '../stores/toast';
+
+import { useAdminAuditStore } from '../stores/adminAudit';
+
 import { RotateCw, Loader2, ClipboardList, CheckCircle, Search, X, Copy, Ban } from 'lucide-vue-next';
+
 import { formatStatus } from '../utils/formatters';
 
+
+
 interface Audit {
+
   username: string;
+
   nickname: string;
+
   email: string;
+
   status: string;
+
   auditCode: string;
+
   isExpired: boolean;
+
 }
 
-const audits = ref<Audit[]>([]);
-const loading = ref(true);
+
+
+const adminAuditStore = useAdminAuditStore();
+
 const searchQuery = ref('');
+
 const isSearchExpanded = ref(false);
+
 const searchInput = ref<HTMLInputElement | null>(null);
+
 const toast = useToastStore();
 
+
+
 const showApproveModal = ref(false);
+
 const showBanModal = ref(false);
+
 const selectedAudit = ref<Audit | null>(null);
 
+
+
 const copyToClipboard = async (text: string) => {
+
   try {
+
     await navigator.clipboard.writeText(text);
+
     toast.success('复制成功', '审核码已复制到剪贴板');
+
   } catch (err) {
+
     toast.error('复制失败', '请手动复制');
+
   }
+
 };
+
+
 
 watch(isSearchExpanded, (val) => {
+
   if (val) {
+
     nextTick(() => {
+
       searchInput.value?.focus();
+
     });
+
   }
+
 });
+
+
 
 const filteredAudits = computed(() => {
-  if (!searchQuery.value) return audits.value;
+
+  const audits = adminAuditStore.audits;
+
+  if (!searchQuery.value) return audits;
+
   const q = searchQuery.value.toLowerCase();
-  return audits.value.filter(audit => 
+
+  return audits.filter(audit => 
+
     audit.auditCode.toLowerCase().includes(q) ||
+
     audit.username.toLowerCase().includes(q) ||
+
     audit.nickname?.toLowerCase().includes(q) ||
+
     audit.email.toLowerCase().includes(q)
+
   );
+
 });
 
-const fetchAudits = async () => {
-  loading.value = true;
-  const minTimer = new Promise(resolve => setTimeout(resolve, 600));
+
+
+const fetchAudits = async (page?: number) => {
+
+  const targetPage = typeof page === 'number' ? page : adminAuditStore.pagination.currentPage;
+
   try {
-    const codes = await api.get<string[]>('/registrations');
-    
-    const detailsPromises = codes.map(code => api.get<Audit>(`/registrations/${code}`));
-    const details = await Promise.all(detailsPromises);
-    
-    audits.value = details;
-    await minTimer;
+
+    await adminAuditStore.fetchAudits(targetPage);
+
   } catch (error: any) {
+
     toast.error('获取审核列表失败', error.message);
-  } finally {
-    loading.value = false;
+
   }
+
 };
+
+
+
+const handlePageChange = (page: number) => {
+
+  fetchAudits(page);
+
+};
+
+
 
 const confirmApprove = (audit: Audit) => {
+
   selectedAudit.value = audit;
+
   showApproveModal.value = true;
+
 };
+
+
 
 const handleApprove = async () => {
+
   if (!selectedAudit.value) return;
+
   try {
+
     await api.patch(`/registrations/${selectedAudit.value.auditCode}`);
+
     toast.success('审核已通过');
+
     showApproveModal.value = false;
+
     await fetchAudits();
+
   } catch (error: any) {
+
     toast.error('操作失败', error.message);
+
   }
+
 };
+
+
 
 const confirmBan = (audit: Audit) => {
+
   selectedAudit.value = audit;
+
   showBanModal.value = true;
+
 };
+
+
 
 const handleBan = async () => {
+
   if (!selectedAudit.value) return;
+
   try {
+
     await api.delete(`/registrations/${selectedAudit.value.auditCode}`);
+
     toast.success('用户已封禁');
+
     showBanModal.value = false;
+
     await fetchAudits();
+
   } catch (error: any) {
+
     toast.error('操作失败', error.message);
+
   }
+
 };
 
+
+
 onMounted(() => {
+
   fetchAudits();
+
 });
+
 </script>

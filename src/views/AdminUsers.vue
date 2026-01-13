@@ -10,11 +10,12 @@
           </h1>
           <BaseButton 
             variant="secondary"
-            @click="fetchUsers" 
-            :loading="loading"
+            @click="fetchUsers(0)" 
+            :loading="adminUserStore.loading"
             class="animate-slide-up animate-delay-50"
           >
-            <RotateCw v-if="!loading" class="h-4 w-4 mr-2" />
+            <RotateCw v-if="!adminUserStore.loading" class="h-4 w-4 mr-2" />
+            <RotateCw v-else class="h-4 w-4 mr-2 animate-spin" />
             刷新列表
           </BaseButton>
         </div>
@@ -24,21 +25,26 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 mt-8">
           <div class="px-4 sm:px-0">
             <Transition name="fade-slide" mode="out-in">
-              <div :key="loading ? 'loading' : (users.length > 0 ? 'data' : 'empty')">
+              <div :key="adminUserStore.users.length > 0 ? 'data' : (adminUserStore.loading ? 'loading' : 'empty')">
                 <BaseCard body-class="p-0 overflow-hidden">
-                  <!-- Loading State -->
-                  <div v-if="loading" class="p-12 flex justify-center items-center text-gray-400">
+                  <!-- Loading State (only if no cache) -->
+                  <div v-if="adminUserStore.loading && adminUserStore.users.length === 0" class="p-12 flex justify-center items-center text-gray-400">
                     <Loader2 class="h-8 w-8 animate-spin" />
                   </div>
 
                   <!-- Empty State -->
-                  <div v-else-if="users.length === 0" class="p-12 text-center text-gray-500 flex flex-col items-center">
+                  <div v-else-if="adminUserStore.users.length === 0" class="p-12 text-center text-gray-500 flex flex-col items-center">
                     <Users class="h-12 w-12 text-gray-300 mb-3" />
                     <p>暂无用户数据</p>
                   </div>
 
                   <!-- Users Table -->
-                  <div v-else class="overflow-x-auto">
+                  <div v-else class="overflow-x-auto relative">
+                    <!-- Loading overlay for refresh -->
+                    <div v-if="adminUserStore.loading" class="absolute inset-0 bg-white/40 backdrop-blur-[1px] z-10 flex items-center justify-center transition-all duration-300">
+                      <Loader2 class="h-8 w-8 animate-spin text-indigo-500" />
+                    </div>
+
                     <table class="min-w-full divide-y divide-gray-200">
                       <thead class="bg-gray-50/50">
                         <tr>
@@ -52,7 +58,7 @@
                         </tr>
                       </thead>
                       <tbody class="bg-white divide-y divide-gray-100">
-                        <tr v-for="user in users" :key="user.username" class="hover:bg-gray-50/80 transition-colors duration-150">
+                        <tr v-for="user in adminUserStore.users" :key="user.username" class="hover:bg-gray-50/80 transition-colors duration-150">
                           <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                               <div 
@@ -121,6 +127,18 @@
                       </tbody>
                     </table>
                   </div>
+
+                  <!-- Pagination -->
+                  <Pagination 
+                    v-if="adminUserStore.users.length > 0"
+                    :current-page="adminUserStore.pagination.currentPage"
+                    :total-pages="adminUserStore.pagination.totalPages"
+                    :total-elements="adminUserStore.pagination.totalElements"
+                    :page-size="adminUserStore.pagination.pageSize"
+                    :is-last="adminUserStore.pagination.isLast"
+                    @page-change="handlePageChange"
+                    class="bg-gray-50/50 border-t border-gray-100"
+                  />
                 </BaseCard>
               </div>
             </Transition>
@@ -282,9 +300,11 @@ import BaseCard from '../components/BaseCard.vue';
 import BaseButton from '../components/BaseButton.vue';
 import BaseInput from '../components/BaseInput.vue';
 import Modal from '../components/Modal.vue';
+import Pagination from '../components/Pagination.vue';
 import api from '../api';
 import { useToastStore } from '../stores/toast';
 import { useAuthStore } from '../stores/auth';
+import { useAdminUserStore } from '../stores/adminUser';
 import { Edit2, KeyRound, RotateCw, Loader2, Users, Trash2, ChevronDown, Check, Ban, UserCheck, ShieldOff } from 'lucide-vue-next';
 import { formatStatus, formatRole } from '../utils/formatters';
 
@@ -301,7 +321,7 @@ interface User {
   minecraftUsername?: string;
 }
 
-const users = ref<User[]>([]);
+const adminUserStore = useAdminUserStore();
 const showEditModal = ref(false);
 const showPasswordModal = ref(false);
 const showDeleteModal = ref(false);
@@ -310,7 +330,6 @@ const showPardonModal = ref(false);
 const showReset2FAModal = ref(false);
 const showRoleDropdown = ref(false);
 const selectedUser = ref<User | null>(null);
-const loading = ref(false);
 const toast = useToastStore();
 const auth = useAuthStore();
 
@@ -349,18 +368,17 @@ const passwordForm = ref({
   confirmPassword: ''
 });
 
-const fetchUsers = async () => {
-  loading.value = true;
-  const minTimer = new Promise(resolve => setTimeout(resolve, 600));
+const fetchUsers = async (page?: number) => {
+  const targetPage = typeof page === 'number' ? page : adminUserStore.pagination.currentPage;
   try {
-    const data = await api.get<User[]>('/users');
-    users.value = data;
-    await minTimer;
+    await adminUserStore.fetchUsers(targetPage);
   } catch (error: any) {
     toast.error('获取用户列表失败', error.message);
-  } finally {
-    loading.value = false;
   }
+};
+
+const handlePageChange = (page: number) => {
+  fetchUsers(page);
 };
 
 const roleClass = (role: string) => {

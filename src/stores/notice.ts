@@ -50,10 +50,12 @@ export const useNoticeStore = defineStore('notice', {
     }
   },
   actions: {
-    async fetchNotices(page = 0, size = 10) {
+    async fetchNotices(page: any = 0, size: any = 10) {
+      const pageNum = typeof page === 'number' ? page : 0;
+      const sizeNum = typeof size === 'number' ? size : 10;
       this.loading = true;
       try {
-        const response = await api.get<PaginatedNotices>(`/notices?page=${page}&size=${size}&t=${Date.now()}`);
+        const response = await api.get<PaginatedNotices>(`/notices?page=${pageNum}&size=${sizeNum}&t=${Date.now()}`);
         this.notices = response.content;
         this.totalPages = response.totalPages;
         this.totalElements = response.totalElements;
