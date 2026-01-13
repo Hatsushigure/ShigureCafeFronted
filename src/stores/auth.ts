@@ -12,6 +12,7 @@ interface User {
   email2faEnabled: boolean;
   totpEnabled: boolean;
   minecraftUuid: string;
+  minecraftUsername: string;
 }
 
 interface JwtPayload {

@@ -44,6 +44,7 @@
                         <tr>
                           <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户 / 昵称</th>
                           <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">电子邮箱</th>
+                          <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Minecraft</th>
                           <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户角色</th>
                           <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">双重验证</th>
                           <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
@@ -66,6 +67,13 @@
                             </div>
                           </td>
                           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.email }}</td>
+                          <td class="px-6 py-4 whitespace-nowrap">
+                            <div v-if="user.minecraftUuid" class="flex flex-col">
+                              <span class="text-sm font-medium text-gray-900">{{ user.minecraftUsername }}</span>
+                              <span class="text-xs text-gray-400 font-mono">{{ user.minecraftUuid }}</span>
+                            </div>
+                            <span v-else class="text-xs text-gray-400 italic">未绑定</span>
+                          </td>
                           <td class="px-6 py-4 whitespace-nowrap">
                             <span :class="roleClass(user.role)" class="px-2.5 py-0.5 inline-flex text-xs font-medium rounded-full">
                               {{ formatRole(user.role) }}
@@ -289,6 +297,8 @@ interface User {
   twoFactorEnabled: boolean;
   email2faEnabled: boolean;
   totpEnabled: boolean;
+  minecraftUuid?: string;
+  minecraftUsername?: string;
 }
 
 const users = ref<User[]>([]);

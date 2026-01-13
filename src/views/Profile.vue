@@ -85,6 +85,40 @@
               </dl>
             </BaseCard>
           </div>
+
+          <!-- Minecraft Section -->
+          <div class="px-4 sm:px-0 mt-8 animate-slide-up animate-delay-100">
+            <BaseCard title="Minecraft 绑定" subtitle="绑定您的 Minecraft 账号，以便在游戏内享受更多功能。">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                  <div :class="[auth.user?.minecraftUuid ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700', 'px-3 py-1 rounded-full text-xs font-bold transition-colors duration-300']">
+                    {{ auth.user?.minecraftUuid ? '已绑定' : '未绑定' }}
+                  </div>
+                  <div class="flex flex-col" v-if="auth.user?.minecraftUuid">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm font-semibold text-gray-900">{{ auth.user?.minecraftUsername }}</span>
+                        <button 
+                            @click="handleRefreshMinecraft" 
+                            class="p-1 text-gray-400 hover:text-blue-600 transition-colors rounded-full hover:bg-blue-50"
+                            title="刷新角色名"
+                            :disabled="refreshLoading"
+                        >
+                            <RotateCw :class="['h-3.5 w-3.5', refreshLoading ? 'animate-spin' : '']" />
+                        </button>
+                    </div>
+                  </div>
+                  <span class="text-sm text-gray-600" v-else>绑定后将同步您的游戏属性</span>
+                </div>
+                <BaseButton 
+                  @click="handleBindMinecraft" 
+                  :disabled="bindLoading"
+                  :variant="auth.user?.minecraftUuid ? 'secondary' : 'primary'"
+                  :label="auth.user?.minecraftUuid ? '重新绑定' : '立即绑定'"
+                  :loading="bindLoading"
+                />
+              </div>
+            </BaseCard>
+          </div>
         </div>
       </main>
     </div>
@@ -126,9 +160,41 @@ import BaseButton from '../components/BaseButton.vue';
 import Modal from '../components/Modal.vue';
 import api from '../api';
 import { formatStatus, formatRole } from '../utils/formatters';
+import { RotateCw } from 'lucide-vue-next';
 
 const auth = useAuthStore();
 const toastStore = useToastStore();
+const bindLoading = ref(false);
+const refreshLoading = ref(false);
+
+const handleBindMinecraft = async () => {
+    bindLoading.value = true;
+    try {
+        const { clientId } = await api.get<{ clientId: string }>('/users/config/microsoft-client-id');
+        const redirectUri = window.location.origin + window.location.pathname;
+        const scope = 'XboxLive.signin offline_access';
+        // Use 'consumers' endpoint for personal Microsoft accounts
+        const authUrl = `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_mode=query&prompt=select_account`;
+        window.location.href = authUrl;
+    } catch (e: any) {
+        toastStore.error('获取配置失败', e.message || '系统异常');
+        bindLoading.value = false;
+    }
+};
+
+const handleRefreshMinecraft = async () => {
+    if (!auth.user?.username) return;
+    refreshLoading.value = true;
+    try {
+        await api.post(`/users/${auth.user.username}/minecraft/refresh`);
+        toastStore.success('刷新成功', '您的 Minecraft 角色名已更新。');
+        await auth.fetchCurrentUser();
+    } catch (e: any) {
+        toastStore.error('刷新失败', e.message || '系统异常');
+    } finally {
+        refreshLoading.value = false;
+    }
+};
 
 const avatarChar = computed(() => {
   const name = auth.user?.nickname || auth.user?.username || '?';
@@ -177,6 +243,28 @@ const handleUpdateNickname = async () => {
 onMounted(async () => {
   if (!auth.user) {
     await auth.fetchCurrentUser();
+  }
+
+  // Handle OAuth2 callback
+  const urlParams = new URLSearchParams(window.location.search);
+  const code = urlParams.get('code');
+  if (code && auth.user) {
+    // Clear code from URL
+    window.history.replaceState({}, document.title, window.location.pathname);
+    
+    bindLoading.value = true;
+    try {
+        const redirectUri = window.location.origin + window.location.pathname;
+        await api.post(`/users/${auth.user.username}/minecraft/bind`, { code, redirectUri });
+        toastStore.success('绑定成功', '您的 Minecraft 账号已成功绑定。');
+        // Force refresh user data
+        auth.user = null;
+        await auth.fetchCurrentUser();
+    } catch (e: any) {
+        toastStore.error('绑定失败', e.message || '可能原因：Microsoft 账号未购买 Minecraft 或授权超时');
+    } finally {
+        bindLoading.value = false;
+    }
   }
 });
 </script>

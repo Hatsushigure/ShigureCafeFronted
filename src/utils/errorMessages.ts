@@ -44,6 +44,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
     'MINECRAFT_PROFILE_NOT_FOUND': '未找到 Minecraft 角色，请确保您已购买游戏并设置了角色名称',
     'MINECRAFT_UNAUTHORIZED': 'Minecraft 授权失效，请重新绑定',
     'MINECRAFT_ACCOUNT_SUSPENDED': '您的 Minecraft 账号已被封禁或挂起',
+    'MINECRAFT_NOT_BOUND': '尚未绑定 Minecraft 账号',
     'MICROSOFT_AUTH_FAILED': '微软登录验证失败',
     'MICROSOFT_INVALID_GRANT': '微软授权码无效或已过期，请重新登录',
     'XBOX_LIVE_AUTH_FAILED': 'Xbox Live 验证失败',
