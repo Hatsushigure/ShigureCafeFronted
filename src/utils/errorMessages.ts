@@ -40,9 +40,14 @@ export const ERROR_MESSAGES: Record<string, string> = {
     'XBOX_CHILD_ACCOUNT_RESTRICTION': '您的账号受到青少年保护限制，无法完成绑定',
     'MINECRAFT_AUTH_FAILED': 'Minecraft 验证失败，请确保您的账号已购买游戏',
     'MINECRAFT_APP_REGISTRATION_INVALID': 'Minecraft 服务配置无效（应用注册未完成），请联系管理员',
-    'MINECRAFT_PROFILE_FAILED': '无法获取 Minecraft 资料，请确保您已设置游戏角色',
+    'MINECRAFT_PROFILE_FAILED': '无法获取 Minecraft 资料，请确保您已购买游戏并设置游戏角色',
+    'MINECRAFT_PROFILE_NOT_FOUND': '未找到 Minecraft 角色，请确保您已购买游戏并设置了角色名称',
+    'MINECRAFT_UNAUTHORIZED': 'Minecraft 授权失效，请重新绑定',
+    'MINECRAFT_ACCOUNT_SUSPENDED': '您的 Minecraft 账号已被封禁或挂起',
     'MICROSOFT_AUTH_FAILED': '微软登录验证失败',
+    'MICROSOFT_INVALID_GRANT': '微软授权码无效或已过期，请重新登录',
     'XBOX_LIVE_AUTH_FAILED': 'Xbox Live 验证失败',
+    'XBOX_NOT_AVAILABLE_IN_COUNTRY': '您的地区不支持 Xbox Live 服务',
     'XSTS_AUTH_FAILED': 'Xbox 安全令牌获取失败',
 };
 
