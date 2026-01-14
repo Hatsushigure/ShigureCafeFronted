@@ -142,4 +142,14 @@
   .scrollbar-none::-webkit-scrollbar {
     display: none;
   }
+
+  /* Remove backticks from inline code in prose and add background box */
+  .prose :not(pre) > code {
+    @apply bg-gray-100 px-1.5 py-0.5 rounded-md font-medium;
+  }
+
+  .prose :not(pre) > code::before,
+  .prose :not(pre) > code::after {
+    content: "" !important;
+  }
 }
