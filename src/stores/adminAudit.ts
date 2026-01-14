@@ -73,6 +73,10 @@ export const useAdminAuditStore = defineStore('adminAudit', {
       const pageNum = page;
       const sizeNum = size;
 
+      if (force) {
+        this.auditsMap = {};
+      }
+
       // 1. If we have cache and it's not a forced refresh, switch immediately
       if (!force && this.auditsMap[pageNum]) {
         this.currentPage = pageNum;
@@ -96,9 +100,7 @@ export const useAdminAuditStore = defineStore('adminAudit', {
       try {
         const params: any = {
             page: pageNum,
-            size: sizeNum,
-            sortBy: 'expiryDate',
-            direction: 'desc'
+            size: sizeNum
         };
 
         const data = await api.get<PagedResponse<Audit>>('/registrations', {

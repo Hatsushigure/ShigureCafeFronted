@@ -82,6 +82,10 @@ export const useNoticeStore = defineStore('notice', {
       const pageNum = page;
       const sizeNum = size;
 
+      if (force) {
+        this.notices = {};
+      }
+
       // 1. If we have cache and it's not a forced refresh, switch immediately
       if (!force && this.notices[pageNum]) {
         this.currentPage = pageNum;

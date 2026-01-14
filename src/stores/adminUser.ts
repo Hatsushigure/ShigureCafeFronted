@@ -77,6 +77,10 @@ export const useAdminUserStore = defineStore('adminUser', {
       const pageNum = page;
       const sizeNum = size;
 
+      if (force) {
+        this.usersMap = {};
+      }
+
       // 1. If we have cache and it's not a forced refresh, switch immediately
       if (!force && this.usersMap[pageNum]) {
         this.currentPage = pageNum;
