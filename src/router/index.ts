@@ -12,7 +12,6 @@ const Profile = () => import('../views/Profile.vue');
 const Security = () => import('../views/Security.vue');
 const AdminUsers = () => import('../views/AdminUsers.vue');
 const AdminAudits = () => import('../views/AdminAudits.vue');
-const AdminNotices = () => import('../views/AdminNotices.vue');
 const NoticeEditor = () => import('../views/NoticeEditor.vue');
 const AuthWrapper = () => import('../views/AuthWrapper.vue');
 
@@ -96,12 +95,6 @@ const router = createRouter({
       path: '/admin/audits', 
       name: 'AdminAudits', 
       component: AdminAudits,
-      meta: { requiresAuth: true, requiresAdmin: true }
-    },
-    { 
-      path: '/admin/notices', 
-      name: 'AdminNotices', 
-      component: AdminNotices,
       meta: { requiresAuth: true, requiresAdmin: true }
     },
     { path: '/:pathMatch(.*)*', redirect: '/' }

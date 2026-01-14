@@ -130,7 +130,7 @@
 
             <div v-if="auth.user?.role === 'ADMIN'" class="animate-slide-up animate-delay-300">
               <BaseCard 
-                @click="$router.push('/admin/notices')" 
+                @click="$router.push('/notices')" 
                 hoverable
                 body-class="p-6"
                 class="h-full"

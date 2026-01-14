@@ -128,7 +128,7 @@ const fetchNotice = async () => {
     form.value.pinned = data.pinned;
   } catch (error: any) {
     toast.error('获取公告失败', error.message);
-    router.push('/admin/notices');
+    router.push('/notices');
   } finally {
     loading.value = false;
   }
@@ -151,12 +151,12 @@ const saveNotice = async () => {
     }
     await noticeStore.fetchNotices();
     
-    // Redirect logic: use redirect query param if available, otherwise default to /admin/notices
+    // Redirect logic: use redirect query param if available, otherwise default to /notices
     const redirectPath = route.query.redirect as string;
     if (redirectPath) {
       router.push(redirectPath);
     } else {
-      router.push('/admin/notices');
+      router.push('/notices');
     }
   } catch (error: any) {
     toast.error('保存失败', error.message);
