@@ -70,22 +70,28 @@ export const useAdminAuditStore = defineStore('adminAudit', {
   actions: {
     async fetchAudits(page = 0, size = 10, force = false) {
       const systemStore = useSystemStore();
-      const toastStore = useToastStore();
       const pageNum = page;
       const sizeNum = size;
 
-      if (!force) {
-        try {
-          const updates = await systemStore.fetchUpdates();
-          if (updates.auditLastUpdated <= this.globalLastUpdated && this.auditsMap[pageNum]) {
-            this.currentPage = pageNum;
-            return;
+      // 1. If we have cache and it's not a forced refresh, switch immediately
+      if (!force && this.auditsMap[pageNum]) {
+        this.currentPage = pageNum;
+        
+        // Background check for updates - Fire and forget
+        systemStore.fetchUpdates().then(updates => {
+          if (updates.auditLastUpdated > this.globalLastUpdated) {
+            this.performFetchAudits(pageNum, sizeNum);
           }
-        } catch (e) {
-          // Silent fail
-        }
+        }).catch(() => {});
+        
+        return; // Return immediately to the caller
       }
 
+      await this.performFetchAudits(pageNum, sizeNum);
+    },
+    async performFetchAudits(pageNum: number, sizeNum: number) {
+      const systemStore = useSystemStore();
+      const toastStore = useToastStore();
       this.loading = true;
       try {
         const params: any = {

@@ -82,8 +82,11 @@
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 mt-8">
           <div class="px-4 sm:px-0">
              <Transition name="fade-slide" mode="out-in">
-               <div :key="noticeStore.loading ? 'loading' : (filteredNotices.length > 0 ? 'data' : 'empty')">
-                 <div v-if="noticeStore.loading" class="bg-white shadow rounded-2xl p-12 flex justify-center items-center text-gray-400">
+               <div 
+                 :key="filteredNotices.length > 0 ? `data-${noticeStore.currentPage}-${searchQuery}` : (noticeStore.loading ? 'loading' : 'empty')"
+                 class="min-h-[400px]"
+               >
+                 <div v-if="noticeStore.loading && noticeStore.currentNotices.length === 0" class="bg-white shadow rounded-2xl p-12 flex justify-center items-center text-gray-400">
                     <Loader2 class="h-8 w-8 animate-spin" />
                  </div>
                  <div v-else-if="filteredNotices.length === 0" class="bg-white shadow rounded-2xl p-12 text-center text-gray-500 flex flex-col items-center">
@@ -164,68 +167,15 @@
                   </div>
 
                   <!-- Pagination Controls -->
-                  <div class="mt-8 flex items-center justify-between pb-10">
-                    <div class="flex-1 flex justify-between sm:hidden">
-                      <BaseButton 
-                        variant="secondary" 
-                        :disabled="searchQuery ? true : noticeStore.currentPage === 0"
-                        @click="handlePageChange(noticeStore.currentPage - 1)"
-                      >
-                        上一页
-                      </BaseButton>
-                      <BaseButton 
-                        variant="secondary"
-                        :disabled="searchQuery ? true : noticeStore.currentPage >= noticeStore.totalPages - 1"
-                        @click="handlePageChange(noticeStore.currentPage + 1)"
-                      >
-                        下一页
-                      </BaseButton>
-                    </div>
-                    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-center">
-                      <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                        <button 
-                          @click="handlePageChange(noticeStore.currentPage - 1)"
-                          :disabled="searchQuery ? true : noticeStore.currentPage === 0"
-                          class="relative inline-flex items-center px-2 py-2 rounded-l-xl border border-gray-200 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                        >
-                          <span class="sr-only">Previous</span>
-                          <ChevronLeft class="h-5 w-5" />
-                        </button>
-                        
-                        <template v-if="searchQuery">
-                          <button
-                            class="z-10 bg-indigo-50 border-indigo-500 text-indigo-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium"
-                          >
-                            1
-                          </button>
-                        </template>
-                        <template v-else>
-                          <button 
-                            v-for="page in noticeStore.totalPages" 
-                            :key="page"
-                            @click="handlePageChange(page - 1)"
-                            :class="[
-                              noticeStore.currentPage === page - 1 
-                                ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600' 
-                                : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50',
-                              'relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-all'
-                            ]"
-                          >
-                            {{ page }}
-                          </button>
-                        </template>
-
-                        <button 
-                          @click="handlePageChange(noticeStore.currentPage + 1)"
-                          :disabled="searchQuery ? true : noticeStore.currentPage >= noticeStore.totalPages - 1"
-                          class="relative inline-flex items-center px-2 py-2 rounded-r-xl border border-gray-200 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                        >
-                          <span class="sr-only">Next</span>
-                          <ChevronRight class="h-5 w-5" />
-                        </button>
-                      </nav>
-                    </div>
-                  </div>
+                  <Pagination 
+                    v-if="filteredNotices.length > 0"
+                    :current-page="searchQuery ? 0 : noticeStore.currentPage"
+                    :total-pages="searchQuery ? Math.ceil(filteredNotices.length / noticeStore.pageSize) : noticeStore.totalPages"
+                    :total-elements="searchQuery ? filteredNotices.length : noticeStore.totalElements"
+                    :page-size="noticeStore.pageSize"
+                    @page-change="handlePageChange"
+                    class="mt-8 pb-10"
+                  />
                  </div>
                </div>
              </Transition>
@@ -266,6 +216,7 @@ import NavBar from '../components/NavBar.vue';
 import BaseCard from '../components/BaseCard.vue';
 import BaseButton from '../components/BaseButton.vue';
 import Modal from '../components/Modal.vue';
+import Pagination from '../components/Pagination.vue';
 import api from '../api';
 import { 
   Loader2, ArrowLeft, ChevronRight, Edit2, ChevronLeft, 
@@ -307,6 +258,10 @@ const renderMarkdown = (content: string) => {
 };
 
 const handlePageChange = async (page: number, force = false) => {
+    const isPageChange = page !== noticeStore.currentPage;
+    if (isPageChange || force) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
     await noticeStore.fetchNotices(page, 10, force);
     fetchReactions();
 };

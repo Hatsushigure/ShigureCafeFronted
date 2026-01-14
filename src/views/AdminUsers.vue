@@ -32,7 +32,7 @@
 
               <!-- Search Input Container -->
               <div 
-                class="relative transition-all duration-300 ease-in-out"
+                class="relative transition-all duration-300 ease-in-out animate-slide-up animate-delay-50"
                 :class="[
                   isSearchExpanded ? 'w-full opacity-100' : 'hidden sm:block sm:w-64 opacity-100'
                 ]"
@@ -77,9 +77,12 @@
       <main>
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 mt-8">
           <div class="px-4 sm:px-0">
-            <Transition name="fade-slide" mode="out-in">
-              <div :key="adminUserStore.users.length > 0 ? 'data' : (adminUserStore.loading ? 'loading' : 'empty')">
-                <BaseCard body-class="p-0 overflow-hidden">
+            <BaseCard body-class="p-0 overflow-hidden" class="animate-slide-up animate-delay-100">
+              <Transition name="fade-slide" mode="out-in">
+                <div 
+                  :key="filteredUsers.length > 0 ? `data-${adminUserStore.pagination.currentPage}-${searchQuery}` : (adminUserStore.loading ? 'loading' : 'empty')"
+                  class="min-h-[400px]"
+                >
                   <!-- Loading State (only if no cache) -->
                   <div v-if="adminUserStore.loading && adminUserStore.users.length === 0" class="p-12 flex justify-center items-center text-gray-400">
                     <Loader2 class="h-8 w-8 animate-spin" />
@@ -182,20 +185,20 @@
                     </table>
                     </CustomScrollContainer>
                   </div>
+                </div>
+              </Transition>
 
-                  <!-- Pagination -->
-                  <Pagination 
-                    v-if="filteredUsers.length > 0"
-                    :current-page="searchQuery ? 0 : adminUserStore.pagination.currentPage"
-                    :total-pages="searchQuery ? Math.ceil(filteredUsers.length / adminUserStore.pagination.pageSize) : adminUserStore.pagination.totalPages"
-                    :total-elements="searchQuery ? filteredUsers.length : adminUserStore.pagination.totalElements"
-                    :page-size="adminUserStore.pagination.pageSize"
-                    @page-change="handlePageChange"
-                    class="bg-gray-50/50 border-t border-gray-100"
-                  />
-                </BaseCard>
-              </div>
-            </Transition>
+              <!-- Pagination -->
+              <Pagination 
+                v-if="filteredUsers.length > 0"
+                :current-page="searchQuery ? 0 : adminUserStore.pagination.currentPage"
+                :total-pages="searchQuery ? Math.ceil(filteredUsers.length / adminUserStore.pagination.pageSize) : adminUserStore.pagination.totalPages"
+                :total-elements="searchQuery ? filteredUsers.length : adminUserStore.pagination.totalElements"
+                :page-size="adminUserStore.pagination.pageSize"
+                @page-change="handlePageChange"
+                class="bg-gray-50/50 border-t border-gray-100"
+              />
+            </BaseCard>
           </div>
         </div>
       </main>
@@ -457,6 +460,10 @@ const fetchUsers = async (page?: number, force: boolean = false) => {
 };
 
 const handlePageChange = (page: number) => {
+  const isPageChange = page !== adminUserStore.pagination.currentPage;
+  if (isPageChange) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
   fetchUsers(page);
 };
 

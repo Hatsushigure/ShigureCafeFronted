@@ -32,7 +32,7 @@
 
               <!-- Search Input Container -->
               <div 
-                class="relative transition-all duration-300 ease-in-out"
+                class="relative transition-all duration-300 ease-in-out animate-slide-up animate-delay-50"
                 :class="[
                   isSearchExpanded ? 'w-full opacity-100' : 'hidden sm:block sm:w-64 opacity-100'
                 ]"
@@ -77,9 +77,12 @@
       <main>
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 mt-8">
           <div class="px-4 sm:px-0">
-            <Transition name="fade-slide" mode="out-in">
-              <div :key="adminAuditStore.audits.length > 0 ? 'data' : (adminAuditStore.loading ? 'loading' : 'empty')">
-                <BaseCard body-class="p-0 overflow-hidden">
+            <BaseCard body-class="p-0 overflow-hidden" class="animate-slide-up animate-delay-100">
+              <Transition name="fade-slide" mode="out-in">
+                <div 
+                  :key="filteredAudits.length > 0 ? `data-${adminAuditStore.pagination.currentPage}-${searchQuery}` : (adminAuditStore.loading ? 'loading' : 'empty')"
+                  class="min-h-[400px]"
+                >
                   <!-- Loading State (only if no cache) -->
                   <div v-if="adminAuditStore.loading && adminAuditStore.audits.length === 0" class="p-12 flex justify-center items-center text-gray-400">
                     <Loader2 class="h-8 w-8 animate-spin" />
@@ -100,98 +103,98 @@
 
                     <CustomScrollContainer>
                       <table class="min-w-full divide-y divide-gray-200">
-                      <thead class="bg-gray-50/50">
-                        <tr>
-                          <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户</th>
-                          <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">电子邮箱</th>
-                          <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">审核码</th>
-                          <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
-                          <th scope="col" class="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                        </tr>
-                      </thead>
-                      <tbody class="bg-white divide-y divide-gray-100">
-                        <tr v-for="audit in filteredAudits" :key="audit.auditCode" class="hover:bg-gray-50/80 transition-colors duration-150">
-                          <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center">
-                              <div class="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-xs mr-3">
-                                {{ (audit.nickname || audit.username).substring(0, 2).toUpperCase() }}
+                        <thead class="bg-gray-50/50">
+                          <tr>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">电子邮箱</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">审核码</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                            <th scope="col" class="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                          </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-100">
+                          <tr v-for="audit in filteredAudits" :key="audit.auditCode" class="hover:bg-gray-50/80 transition-colors duration-150">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                              <div class="flex items-center">
+                                <div class="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-xs mr-3">
+                                  {{ (audit.nickname || audit.username).substring(0, 2).toUpperCase() }}
+                                </div>
+                                <div>
+                                  <div class="text-sm font-medium text-gray-900" :title="audit.nickname || audit.username">{{ truncateText(audit.nickname || audit.username) }}</div>
+                                  <div class="text-xs text-gray-400" :title="'@' + audit.username">@{{ truncateText(audit.username) }}</div>
+                                </div>
                               </div>
-                              <div>
-                                <div class="text-sm font-medium text-gray-900" :title="audit.nickname || audit.username">{{ truncateText(audit.nickname || audit.username) }}</div>
-                                <div class="text-xs text-gray-400" :title="'@' + audit.username">@{{ truncateText(audit.username) }}</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" :title="audit.email">
-                            {{ truncateText(audit.email) }}
-                          </td>
-                          <td class="px-6 py-4 whitespace-nowrap">
-                             <div class="flex items-center space-x-2">
-                               <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-gray-100 text-gray-800 font-mono" :title="audit.auditCode">
-                                 {{ truncateText(audit.auditCode) }}
-                               </span>
-                               <button 
-                                 @click="copyToClipboard(audit.auditCode)" 
-                                 class="p-1 hover:bg-gray-200 rounded text-gray-400 hover:text-gray-600 transition-colors" 
-                                 title="复制审核码"
-                               >
-                                 <Copy class="h-3.5 w-3.5" />
-                               </button>
-                             </div>
-                          </td>
-                          <td class="px-6 py-4 whitespace-nowrap">
-                            <span 
-                              class="px-2.5 py-0.5 inline-flex text-xs font-medium rounded-full"
-                              :class="{
-                                'bg-green-100 text-green-800': audit.status === 'ACTIVE',
-                                'bg-yellow-100 text-yellow-800': audit.status === 'PENDING',
-                                'bg-red-100 text-red-800': audit.status === 'BANNED',
-                                'bg-gray-100 text-gray-800': audit.isExpired
-                              }"
-                            >
-                              {{ audit.isExpired ? '已过期' : formatStatus(audit.status) }}
-                            </span>
-                          </td>
-                          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                            <button 
-                              v-if="!audit.isExpired && audit.status !== 'ACTIVE'"
-                              @click="confirmApprove(audit)" 
-                              class="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 p-1.5 rounded-md transition-colors"
-                              title="通过审核"
-                            >
-                              <CheckCircle class="h-4 w-4" />
-                            </button>
-                            <button 
-                              v-if="!audit.isExpired && audit.status !== 'ACTIVE' && audit.status !== 'BANNED'"
-                              @click="confirmBan(audit)" 
-                              class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-1.5 rounded-md transition-colors"
-                              title="封禁用户"
-                            >
-                              <Ban class="h-4 w-4" />
-                            </button>
-                            <span v-else class="text-gray-400 text-xs italic">
-                              无需操作
-                            </span>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" :title="audit.email">
+                              {{ truncateText(audit.email) }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                               <div class="flex items-center space-x-2">
+                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-gray-100 text-gray-800 font-mono" :title="audit.auditCode">
+                                   {{ truncateText(audit.auditCode) }}
+                                 </span>
+                                 <button 
+                                   @click="copyToClipboard(audit.auditCode)" 
+                                   class="p-1 hover:bg-gray-200 rounded text-gray-400 hover:text-gray-600 transition-colors" 
+                                   title="复制审核码"
+                                 >
+                                   <Copy class="h-3.5 w-3.5" />
+                                 </button>
+                               </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                              <span 
+                                class="px-2.5 py-0.5 inline-flex text-xs font-medium rounded-full"
+                                :class="{
+                                  'bg-green-100 text-green-800': audit.status === 'ACTIVE',
+                                  'bg-yellow-100 text-yellow-800': audit.status === 'PENDING',
+                                  'bg-red-100 text-red-800': audit.status === 'BANNED',
+                                  'bg-gray-100 text-gray-800': audit.isExpired
+                                }"
+                              >
+                                {{ audit.isExpired ? '已过期' : formatStatus(audit.status) }}
+                              </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                              <button 
+                                v-if="!audit.isExpired && audit.status !== 'ACTIVE'"
+                                @click="confirmApprove(audit)" 
+                                class="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 p-1.5 rounded-md transition-colors"
+                                title="通过审核"
+                              >
+                                <CheckCircle class="h-4 w-4" />
+                              </button>
+                              <button 
+                                v-if="!audit.isExpired && audit.status !== 'ACTIVE' && audit.status !== 'BANNED'"
+                                @click="confirmBan(audit)" 
+                                class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-1.5 rounded-md transition-colors"
+                                title="封禁用户"
+                              >
+                                <Ban class="h-4 w-4" />
+                              </button>
+                              <span v-else class="text-gray-400 text-xs italic">
+                                无需操作
+                              </span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
                     </CustomScrollContainer>
                   </div>
+                </div>
+              </Transition>
 
-                  <!-- Pagination -->
-                  <Pagination 
-                    v-if="filteredAudits.length > 0"
-                    :current-page="searchQuery ? 0 : adminAuditStore.pagination.currentPage"
-                    :total-pages="searchQuery ? Math.ceil(filteredAudits.length / adminAuditStore.pagination.pageSize) : adminAuditStore.pagination.totalPages"
-                    :total-elements="searchQuery ? filteredAudits.length : adminAuditStore.pagination.totalElements"
-                    :page-size="adminAuditStore.pagination.pageSize"
-                    @page-change="handlePageChange"
-                    class="bg-gray-50/50 border-t border-gray-100"
-                  />
-                </BaseCard>
-              </div>
-            </Transition>
+              <!-- Pagination -->
+              <Pagination 
+                v-if="filteredAudits.length > 0"
+                :current-page="searchQuery ? 0 : adminAuditStore.pagination.currentPage"
+                :total-pages="searchQuery ? Math.ceil(filteredAudits.length / adminAuditStore.pagination.pageSize) : adminAuditStore.pagination.totalPages"
+                :total-elements="searchQuery ? filteredAudits.length : adminAuditStore.pagination.totalElements"
+                :page-size="adminAuditStore.pagination.pageSize"
+                @page-change="handlePageChange"
+                class="bg-gray-50/50 border-t border-gray-100"
+              />
+            </BaseCard>
           </div>
         </div>
       </main>
@@ -371,6 +374,10 @@ const fetchAudits = async (page?: number, force: boolean = false) => {
 };
 
 const handlePageChange = (page: number) => {
+  const isPageChange = page !== adminAuditStore.pagination.currentPage;
+  if (isPageChange) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
   fetchAudits(page);
 };
 

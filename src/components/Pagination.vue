@@ -26,7 +26,29 @@
           条结果
         </p>
       </div>
-      <div>
+      <div class="flex items-center space-x-4">
+        <!-- Jump to Page -->
+        <div class="flex items-center space-x-2 mr-2">
+          <span class="text-sm text-gray-500">跳转至</span>
+          <div class="relative">
+            <input
+              v-model="jumpPageInput"
+              type="text"
+              class="w-12 px-2 py-1 text-sm text-center border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              @keyup.enter="handleJump"
+              @blur="jumpPageInput = (currentPage + 1).toString()"
+            />
+          </div>
+          <span class="text-sm text-gray-500">/ {{ totalPages }} 页</span>
+          <button 
+            @click="handleJump"
+            class="p-1 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+            title="跳转"
+          >
+            <ArrowRight class="h-4 w-4" />
+          </button>
+        </div>
+
         <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
           <button
             @click="$emit('page-change', currentPage - 1)"
@@ -72,8 +94,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { ChevronLeft, ChevronRight } from 'lucide-vue-next';
+import { computed, ref, watch } from 'vue';
+import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-vue-next';
 import BaseButton from './BaseButton.vue';
 
 const props = defineProps<{
@@ -83,7 +105,22 @@ const props = defineProps<{
   pageSize: number;
 }>();
 
-defineEmits(['page-change']);
+const emit = defineEmits(['page-change']);
+
+const jumpPageInput = ref((props.currentPage + 1).toString());
+
+watch(() => props.currentPage, (newVal) => {
+  jumpPageInput.value = (newVal + 1).toString();
+});
+
+const handleJump = () => {
+  const page = parseInt(jumpPageInput.value);
+  if (!isNaN(page) && page >= 1 && page <= props.totalPages) {
+    emit('page-change', page - 1);
+  } else {
+    jumpPageInput.value = (props.currentPage + 1).toString();
+  }
+};
 
 const displayedPages = computed(() => {
   const pages: number[] = [];

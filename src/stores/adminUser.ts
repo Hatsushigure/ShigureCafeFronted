@@ -74,22 +74,28 @@ export const useAdminUserStore = defineStore('adminUser', {
   actions: {
     async fetchUsers(page = 0, size = 10, force = false) {
       const systemStore = useSystemStore();
-      const toastStore = useToastStore();
       const pageNum = page;
       const sizeNum = size;
 
-      if (!force) {
-        try {
-          const updates = await systemStore.fetchUpdates();
-          if (updates.userLastUpdated <= this.globalLastUpdated && this.usersMap[pageNum]) {
-            this.currentPage = pageNum;
-            return;
+      // 1. If we have cache and it's not a forced refresh, switch immediately
+      if (!force && this.usersMap[pageNum]) {
+        this.currentPage = pageNum;
+        
+        // Background check for updates - Fire and forget
+        systemStore.fetchUpdates().then(updates => {
+          if (updates.userLastUpdated > this.globalLastUpdated) {
+            this.performFetchUsers(pageNum, sizeNum);
           }
-        } catch (e) {
-          // Silent fail
-        }
+        }).catch(() => {});
+        
+        return;
       }
 
+      await this.performFetchUsers(pageNum, sizeNum);
+    },
+    async performFetchUsers(pageNum: number, sizeNum: number) {
+      const systemStore = useSystemStore();
+      const toastStore = useToastStore();
       this.loading = true;
       try {
         const data = await api.get<PagedResponse<User>>('/users', {
