@@ -190,7 +190,6 @@
                     :total-pages="searchQuery ? Math.ceil(filteredUsers.length / adminUserStore.pagination.pageSize) : adminUserStore.pagination.totalPages"
                     :total-elements="searchQuery ? filteredUsers.length : adminUserStore.pagination.totalElements"
                     :page-size="adminUserStore.pagination.pageSize"
-                    :is-last="searchQuery ? true : adminUserStore.pagination.isLast"
                     @page-change="handlePageChange"
                     class="bg-gray-50/50 border-t border-gray-100"
                   />

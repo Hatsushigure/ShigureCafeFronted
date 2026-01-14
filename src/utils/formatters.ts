@@ -24,3 +24,16 @@ export const truncateText = (text: string | null | undefined, length = 30) => {
   }
   return text;
 };
+
+export const formatDateTime = (timestamp: number) => {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  return date.toLocaleString(undefined, {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+};

@@ -201,14 +201,14 @@
                               置顶
                             </span>
                           </div>
-                          <span class="text-xs text-gray-400">{{ new Date(notice.createdAt).toLocaleDateString() }}</span>
+                          <span class="text-xs text-gray-400">{{ formatDateTime(notice.createdAt) }}</span>
                         </div>
                         <div class="mt-2 prose prose-sm prose-slate max-w-none text-gray-600 line-clamp-3 overflow-hidden" v-html="renderMarkdown(notice.content)"></div>
                         
                         <!-- Reaction Summary -->
-                        <div v-if="notice.reactions && notice.reactions.length > 0" class="mt-2 flex flex-wrap items-center gap-1">
+                        <div v-if="noticeStore.getReactions(notice.id).length > 0" class="mt-2 flex flex-wrap items-center gap-1">
                           <span 
-                            v-for="reaction in notice.reactions.slice(0, 5)" 
+                            v-for="reaction in noticeStore.getReactions(notice.id).slice(0, 5)" 
                             :key="reaction.emoji"
                             class="inline-flex items-center space-x-1 text-[9px] font-bold text-gray-500 bg-gray-50 border border-gray-100 px-1.5 py-0 rounded-full"
                           >
@@ -220,10 +220,10 @@
                         <div class="mt-4 flex items-center justify-between">
                            <div class="flex items-center text-xs text-gray-500">
                               <span class="font-medium mr-2">{{ notice.authorNickname }}</span>
-                              <span v-if="notice.updatedAt !== notice.createdAt" class="italic"> (已编辑)</span>
+                              <span v-if="notice.updatedAt !== notice.createdAt" class="italic"> (已编辑于 {{ formatDateTime(notice.updatedAt) }})</span>
                            </div>
                            <div class="flex items-center space-x-3">
-                             <button v-if="auth.user?.role === 'ADMIN'" @click="$router.push(`/admin/notices/${notice.id}/edit`)" class="text-xs font-bold text-gray-500 hover:text-indigo-600 transition-colors flex items-center">
+                             <button v-if="auth.user?.role === 'ADMIN'" @click="$router.push(`/admin/notices/${notice.id}/edit?redirect=/dashboard`)" class="text-xs font-bold text-gray-500 hover:text-indigo-600 transition-colors flex items-center">
                                <Edit2 class="h-3 w-3 mr-0.5" />
                                编辑
                              </button>
@@ -254,6 +254,7 @@ import NavBar from '../components/NavBar.vue';
 import BaseCard from '../components/BaseCard.vue';
 import { Loader2, ChevronRight, Edit2 } from 'lucide-vue-next';
 import { marked } from 'marked';
+import { formatDateTime } from '../utils/formatters';
 
 const auth = useAuthStore();
 const noticeStore = useNoticeStore();
@@ -296,7 +297,12 @@ onMounted(async () => {
     console.error('Failed to fetch user', error);
   } finally {
     pageLoading.value = false;
-    noticeStore.fetchNotices();
+    await noticeStore.fetchNotices();
+    // Fetch reactions for displayed notices
+    const ids = displayedNotices.value.map(n => n.id);
+    if (ids.length > 0) {
+        noticeStore.fetchReactionsForList(ids);
+    }
   }
 });
 </script>

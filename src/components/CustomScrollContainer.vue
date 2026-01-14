@@ -27,7 +27,6 @@
     >
       <!-- Custom Scrollbar Thumb -->
       <div 
-        ref="thumbRef"
         class="absolute top-0.5 h-1.5 rounded-full transition-colors cursor-pointer"
         :class="[
           isDragging ? 'bg-indigo-500/80' : 'bg-gray-400/80 hover:bg-indigo-500/80'
@@ -43,11 +42,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 
 const containerRef = ref<HTMLElement | null>(null);
 const contentRef = ref<HTMLElement | null>(null);
-const thumbRef = ref<HTMLElement | null>(null);
 const showScrollbar = ref(false);
 const isDragging = ref(false);
 const hasScroll = ref(false);

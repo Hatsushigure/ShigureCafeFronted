@@ -13,7 +13,6 @@ export interface Notice {
   content: string;
   pinned: boolean;
   authorNickname: string;
-  reactions: ReactionCount[];
   createdAt: number;
   updatedAt: number;
 }
@@ -49,6 +48,7 @@ export const useNoticeStore = defineStore('notice', {
 
     return {
       notices: parsePotentialMap(cached) as Record<number, Notice[]>,
+      reactions: {} as Record<number, ReactionCount[]>, // Cache reactions in memory (not persisted for now)
       loading: false,
       lastUpdatedMap: parsePotentialMap(lastUpdated) as Record<number, number>,
       totalPages: pagination ? JSON.parse(pagination).totalPages as number : 0,
@@ -70,6 +70,9 @@ export const useNoticeStore = defineStore('notice', {
         }
       }
       return null;
+    },
+    getReactions: (state) => (id: number) => {
+      return state.reactions[id] || [];
     }
   },
   actions: {
@@ -126,10 +129,35 @@ export const useNoticeStore = defineStore('notice', {
         throw error;
       }
     },
+    async fetchReactions(id: number) {
+        try {
+            const data = await api.get<ReactionCount[]>(`/notices/${id}/reactions`);
+            this.reactions[id] = data;
+            return data;
+        } catch (error) {
+            console.error(`Failed to fetch reactions for notice ${id}`, error);
+            throw error;
+        }
+    },
+    async fetchReactionsForList(noticeIds: number[]) {
+        if (noticeIds.length === 0) return;
+        try {
+            const data = await api.post<Record<number, ReactionCount[]>>(`/notices/reactions/batch`, noticeIds);
+            // Merge into state
+            Object.keys(data).forEach(key => {
+                const id = Number(key);
+                if (data[id]) {
+                    this.reactions[id] = data[id];
+                }
+            });
+        } catch (error) {
+            console.error('Failed to batch fetch reactions', error);
+        }
+    },
     async toggleReaction(noticeId: number, emoji: string) {
       try {
-        const data = await api.post<Notice>(`/notices/${noticeId}/reactions`, { emoji });
-        this.updateNoticeInCache(data);
+        const data = await api.post<ReactionCount[]>(`/notices/${noticeId}/reactions`, { emoji });
+        this.reactions[noticeId] = data;
         return data;
       } catch (error) {
         console.error(`Failed to toggle reaction on notice ${noticeId}`, error);

@@ -134,10 +134,10 @@
                             {{ truncateText(notice.authorNickname) }}
                           </td>
                           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ new Date(notice.createdAt).toLocaleString() }}
+                            {{ formatDateTime(notice.createdAt) }}
                           </td>
                           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ new Date(notice.updatedAt).toLocaleString() }}
+                            {{ formatDateTime(notice.updatedAt) }}
                           </td>
                           <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                             <button @click="$router.push(`/admin/notices/${notice.id}/edit`)"
@@ -257,7 +257,7 @@ import CustomScrollContainer from '../components/CustomScrollContainer.vue';
 import api from '../api';
 import { useNoticeStore, type Notice } from '../stores/notice';
 import { useToastStore } from '../stores/toast';
-import { truncateText } from '../utils/formatters';
+import { truncateText, formatDateTime } from '../utils/formatters';
 import { Plus, RotateCw, Loader2, Megaphone, Edit2, Trash2, ChevronLeft, ChevronRight, Search, X } from 'lucide-vue-next';
 
 const noticeStore = useNoticeStore();

@@ -58,30 +58,30 @@
                                   置顶
                                 </span>
                               </div>
-                              <span class="text-sm text-gray-400">{{ new Date(notice.createdAt).toLocaleString() }}</span>
+                              <span class="text-sm text-gray-400">{{ formatDateTime(notice.createdAt) }}</span>
                             </div>
                             <div class="mt-4 prose prose-slate max-w-none text-gray-600 line-clamp-3 overflow-hidden" v-html="renderMarkdown(notice.content)"></div>
                             
                             <!-- Reaction Summary -->
-                            <div v-if="notice.reactions && notice.reactions.length > 0" class="mt-3 flex flex-wrap items-center gap-1.5">
+                            <div v-if="noticeStore.getReactions(notice.id).length > 0" class="mt-3 flex flex-wrap items-center gap-1.5">
                               <span 
-                                v-for="reaction in notice.reactions.slice(0, 5)" 
+                                v-for="reaction in noticeStore.getReactions(notice.id).slice(0, 5)" 
                                 :key="reaction.emoji"
                                 class="inline-flex items-center space-x-1 text-[10px] font-bold text-gray-500 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full"
                               >
                                 <span>{{ reaction.emoji }}</span>
                                 <span>{{ reaction.count }}</span>
                               </span>
-                              <span v-if="notice.reactions.length > 5" class="text-[10px] text-gray-400">...</span>
+                              <span v-if="noticeStore.getReactions(notice.id).length > 5" class="text-[10px] text-gray-400">...</span>
                             </div>
 
                             <div class="mt-6 flex items-center justify-between border-t border-gray-50 pt-4">
                                <div class="flex items-center text-sm text-gray-500">
                                  <span class="font-medium text-gray-900 mr-2">{{ notice.authorNickname }}</span>
-                                 <span v-if="notice.updatedAt !== notice.createdAt" class="italic"> (已编辑)</span>
+                                 <span v-if="notice.updatedAt !== notice.createdAt" class="italic"> (已编辑于 {{ formatDateTime(notice.updatedAt) }})</span>
                                </div>
                                <div class="flex items-center space-x-4">
-                                 <button v-if="auth.user?.role === 'ADMIN'" @click="$router.push(`/admin/notices/${notice.id}/edit`)" class="text-sm font-bold text-gray-500 hover:text-indigo-600 transition-colors flex items-center">
+                                 <button v-if="auth.user?.role === 'ADMIN'" @click="$router.push(`/admin/notices/${notice.id}/edit?redirect=/notices`)" class="text-sm font-bold text-gray-500 hover:text-indigo-600 transition-colors flex items-center">
                                    <Edit2 class="h-4 w-4 mr-1" />
                                    编辑
                                  </button>
@@ -102,14 +102,14 @@
                       <BaseButton 
                         variant="secondary" 
                         :disabled="noticeStore.currentPage === 0"
-                        @click="noticeStore.fetchNotices(noticeStore.currentPage - 1)"
+                        @click="handlePageChange(noticeStore.currentPage - 1)"
                       >
                         上一页
                       </BaseButton>
                       <BaseButton 
                         variant="secondary"
                         :disabled="noticeStore.currentPage >= noticeStore.totalPages - 1"
-                        @click="noticeStore.fetchNotices(noticeStore.currentPage + 1)"
+                        @click="handlePageChange(noticeStore.currentPage + 1)"
                       >
                         下一页
                       </BaseButton>
@@ -117,7 +117,7 @@
                     <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-center">
                       <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                         <button 
-                          @click="noticeStore.fetchNotices(noticeStore.currentPage - 1)"
+                          @click="handlePageChange(noticeStore.currentPage - 1)"
                           :disabled="noticeStore.currentPage === 0"
                           class="relative inline-flex items-center px-2 py-2 rounded-l-xl border border-gray-200 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         >
@@ -128,7 +128,7 @@
                         <button 
                           v-for="page in noticeStore.totalPages" 
                           :key="page"
-                          @click="noticeStore.fetchNotices(page - 1)"
+                          @click="handlePageChange(page - 1)"
                           :class="[
                             noticeStore.currentPage === page - 1 
                               ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600' 
@@ -140,7 +140,7 @@
                         </button>
 
                         <button 
-                          @click="noticeStore.fetchNotices(noticeStore.currentPage + 1)"
+                          @click="handlePageChange(noticeStore.currentPage + 1)"
                           :disabled="noticeStore.currentPage >= noticeStore.totalPages - 1"
                           class="relative inline-flex items-center px-2 py-2 rounded-r-xl border border-gray-200 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         >
@@ -169,6 +169,7 @@ import BaseCard from '../components/BaseCard.vue';
 import BaseButton from '../components/BaseButton.vue';
 import { Loader2, ArrowLeft, ChevronRight, Edit2, ChevronLeft } from 'lucide-vue-next';
 import { marked } from 'marked';
+import { formatDateTime } from '../utils/formatters';
 
 const auth = useAuthStore();
 const noticeStore = useNoticeStore();
@@ -177,10 +178,23 @@ const renderMarkdown = (content: string) => {
   return marked.parse(content);
 };
 
+const handlePageChange = async (page: number) => {
+    await noticeStore.fetchNotices(page);
+    fetchReactions();
+};
+
+const fetchReactions = () => {
+    const ids = noticeStore.currentNotices.map(n => n.id);
+    if (ids.length > 0) {
+        noticeStore.fetchReactionsForList(ids);
+    }
+};
+
 onMounted(async () => {
   if (!auth.user) {
     await auth.fetchCurrentUser();
   }
-  noticeStore.fetchNotices();
+  await noticeStore.fetchNotices();
+  fetchReactions();
 });
 </script>

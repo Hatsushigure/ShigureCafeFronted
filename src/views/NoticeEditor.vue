@@ -150,7 +150,14 @@ const saveNotice = async () => {
       toast.success('公告发布成功');
     }
     await noticeStore.fetchNotices();
-    router.push('/admin/notices');
+    
+    // Redirect logic: use redirect query param if available, otherwise default to /admin/notices
+    const redirectPath = route.query.redirect as string;
+    if (redirectPath) {
+      router.push(redirectPath);
+    } else {
+      router.push('/admin/notices');
+    }
   } catch (error: any) {
     toast.error('保存失败', error.message);
   } finally {

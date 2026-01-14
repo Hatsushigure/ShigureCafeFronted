@@ -15,7 +15,7 @@
           </div>
           <button 
             v-if="auth.user?.role === 'ADMIN' && notice" 
-            @click="$router.push(`/admin/notices/${notice.id}/edit`)" 
+            @click="$router.push(`/admin/notices/${notice.id}/edit?redirect=/notices/${notice.id}`)" 
             class="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors shadow-sm font-bold text-sm animate-slide-up animate-delay-50"
           >
             <Edit2 class="h-4 w-4" />
@@ -57,7 +57,7 @@
                             </span>
                           </div>
                           <div class="text-right">
-                            <span class="block text-sm text-gray-500">{{ new Date(notice.createdAt).toLocaleString() }}</span>
+                            <span class="block text-sm text-gray-500">{{ formatDateTime(notice.createdAt) }}</span>
                           </div>
                         </div>
                         <div class="prose prose-indigo max-w-none text-gray-700 leading-relaxed" v-html="renderMarkdown(notice.content)"></div>
@@ -66,7 +66,7 @@
                         <div v-if="notice" class="mt-8 pt-6 border-t border-gray-50">
                           <div class="flex flex-wrap items-center gap-2">
                             <button 
-                              v-for="reaction in notice.reactions" 
+                              v-for="reaction in currentReactions" 
                               :key="reaction.emoji"
                               @click="handleReaction(reaction.emoji)"
                               class="flex items-center space-x-2 px-3 py-1.5 rounded-full border transition-all duration-200 transform active:scale-95"
@@ -110,7 +110,7 @@
                              </div>
                              <div>
                                <span class="font-bold text-gray-900 block">{{ notice.authorNickname }}</span>
-                               <span v-if="notice.updatedAt !== notice.createdAt" class="text-xs text-gray-400 italic">已编辑于 {{ new Date(notice.updatedAt).toLocaleString() }}</span>
+                               <span v-if="notice.updatedAt !== notice.createdAt" class="text-xs text-gray-400 italic">已编辑于 {{ formatDateTime(notice.updatedAt) }}</span>
                              </div>
                            </div>
                         </div>
@@ -126,7 +126,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { useNoticeStore, type Notice } from '../stores/notice';
@@ -134,6 +134,7 @@ import NavBar from '../components/NavBar.vue';
 import BaseCard from '../components/BaseCard.vue';
 import { Loader2, ArrowLeft, Edit2, Plus } from 'lucide-vue-next';
 import { marked } from 'marked';
+import { formatDateTime } from '../utils/formatters';
 
 const route = useRoute();
 const auth = useAuthStore();
@@ -149,6 +150,10 @@ const commonEmojis = [
   '🤔', '👀', '🚀', '✅'
 ];
 
+const currentReactions = computed(() => {
+    return notice.value ? noticeStore.getReactions(notice.value.id) : [];
+});
+
 const toggleEmojiPicker = () => {
   showEmojiPicker.value = !showEmojiPicker.value;
 };
@@ -162,10 +167,8 @@ const handleClickOutside = (event: MouseEvent) => {
 const handleReaction = async (emoji: string) => {
   if (!notice.value) return;
   try {
-    const updatedNotice = await noticeStore.toggleReaction(notice.value.id, emoji);
-    if (updatedNotice) {
-      notice.value = updatedNotice;
-    }
+    await noticeStore.toggleReaction(notice.value.id, emoji);
+    // State updates automatically via store
   } catch (error) {
     console.error('Failed to toggle reaction', error);
   }
@@ -181,8 +184,13 @@ const fetchNotice = async () => {
   }
 
   try {
-    const data = await noticeStore.fetchNoticeById(id);
-    notice.value = data;
+    // If not cached or if we want to refresh content anyway
+    if (!cached) {
+        const data = await noticeStore.fetchNoticeById(id);
+        notice.value = data;
+    }
+    // Fetch reactions separately
+    await noticeStore.fetchReactions(id);
   } catch (error) {
     console.error('Failed to fetch notice', error);
   } finally {

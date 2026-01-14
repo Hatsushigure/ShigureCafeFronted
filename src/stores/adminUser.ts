@@ -47,8 +47,7 @@ export const useAdminUserStore = defineStore('adminUser', {
       currentPage: 0,
       pageSize: 10,
       totalElements: 0,
-      totalPages: 0,
-      isLast: true
+      totalPages: 0
     };
 
     return {
@@ -59,7 +58,6 @@ export const useAdminUserStore = defineStore('adminUser', {
       pageSize: pag.pageSize,
       totalElements: pag.totalElements,
       totalPages: pag.totalPages,
-      isLast: pag.isLast,
     };
   },
   getters: {
@@ -69,7 +67,6 @@ export const useAdminUserStore = defineStore('adminUser', {
       pageSize: state.pageSize,
       totalElements: state.totalElements,
       totalPages: state.totalPages,
-      isLast: state.isLast
     })
   },
   actions: {
@@ -93,7 +90,6 @@ export const useAdminUserStore = defineStore('adminUser', {
         this.pageSize = data.pageSize;
         this.totalElements = data.totalElements;
         this.totalPages = data.totalPages;
-        this.isLast = data.last;
         
         this.lastUpdatedMap[pageNum] = data.timestamp;
         
@@ -124,7 +120,6 @@ export const useAdminUserStore = defineStore('adminUser', {
       this.pageSize = 10;
       this.totalElements = 0;
       this.totalPages = 0;
-      this.isLast = true;
       localStorage.removeItem('admin_users_cache');
       localStorage.removeItem('admin_users_pagination');
       localStorage.removeItem('admin_users_last_updated');
