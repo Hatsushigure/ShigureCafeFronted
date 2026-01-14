@@ -61,6 +61,7 @@ export const useAdminUserStore = defineStore('adminUser', {
       totalElements: pag.totalElements,
       totalPages: pag.totalPages,
       fetchCount: 0,
+      fetchPromises: {} as Record<string, Promise<void>>,
     };
   },
   getters: {
@@ -95,39 +96,49 @@ export const useAdminUserStore = defineStore('adminUser', {
       await this.performFetchUsers(pageNum, sizeNum, force);
     },
     async performFetchUsers(pageNum: number, sizeNum: number, force: boolean = false) {
+      const cacheKey = `${pageNum}-${sizeNum}`;
+      if (this.fetchPromises[cacheKey]) {
+        return this.fetchPromises[cacheKey];
+      }
+
       const systemStore = useSystemStore();
       const toastStore = useToastStore();
       this.loading = true;
       
       const minDelay = 1000;
 
-      try {
-        const [data] = await Promise.all([
-          api.get<PagedResponse<User>>('/users', {
-            params: { page: pageNum, size: sizeNum }
-          }),
-          new Promise(resolve => setTimeout(resolve, minDelay))
-        ]);
-        
-        if (force || systemStore.updates.userLastUpdated > this.globalLastUpdated) {
-          this.usersMap = {};
-        }
+      this.fetchPromises[cacheKey] = (async () => {
+        try {
+          const [data] = await Promise.all([
+            api.get<PagedResponse<User>>('/users', {
+              params: { page: pageNum, size: sizeNum }
+            }),
+            new Promise(resolve => setTimeout(resolve, minDelay))
+          ]);
+          
+          if (force || systemStore.updates.userLastUpdated > this.globalLastUpdated) {
+            this.usersMap = {};
+          }
 
-        this.usersMap[pageNum] = data.content;
-        this.currentPage = data.pageNumber;
-        this.pageSize = data.pageSize;
-        this.totalElements = data.totalElements;
-        this.totalPages = data.totalPages;
-        
-        this.globalLastUpdated = data.timestamp;
-        this.fetchCount++;
-        
-        this.saveToLocalStorage();
-      } catch (error: any) {
-        toastStore.error('加载用户列表失败', error.message);
-      } finally {
-        this.loading = false;
-      }
+          this.usersMap[pageNum] = data.content;
+          this.currentPage = data.pageNumber;
+          this.pageSize = data.pageSize;
+          this.totalElements = data.totalElements;
+          this.totalPages = data.totalPages;
+          
+          this.globalLastUpdated = data.timestamp;
+          this.fetchCount++;
+          
+          this.saveToLocalStorage();
+        } catch (error: any) {
+          toastStore.error('加载用户列表失败', error.message);
+        } finally {
+          this.loading = false;
+          delete this.fetchPromises[cacheKey];
+        }
+      })();
+
+      return this.fetchPromises[cacheKey];
     },
     saveToLocalStorage() {
       localStorage.setItem('admin_users_cache', JSON.stringify(this.usersMap));

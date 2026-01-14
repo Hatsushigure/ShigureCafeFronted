@@ -16,25 +16,32 @@ export const useSystemStore = defineStore('system', {
     } as SystemUpdates,
     loading: false,
     lastFetched: 0,
+    fetchPromise: null as Promise<SystemUpdates> | null,
   }),
   actions: {
     async fetchUpdates() {
+      if (this.fetchPromise) {
+        return this.fetchPromise;
+      }
+
       if (Date.now() - this.lastFetched < 1000) {
         return this.updates;
       }
       
       this.loading = true;
-      try {
-        const data = await api.get<SystemUpdates>('/system/updates');
+      this.fetchPromise = api.get<SystemUpdates>('/system/updates').then(data => {
         this.updates = data;
         this.lastFetched = Date.now();
+        this.fetchPromise = null;
         return data;
-      } catch (error) {
-        // Silent background fail
+      }).catch(error => {
+        this.fetchPromise = null;
         throw error;
-      } finally {
+      }).finally(() => {
         this.loading = false;
-      }
+      });
+
+      return this.fetchPromise;
     }
   }
 });

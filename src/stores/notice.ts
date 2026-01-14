@@ -57,6 +57,7 @@ export const useNoticeStore = defineStore('notice', {
       currentPage: pagination ? JSON.parse(pagination).currentPage as number : 0,
       pageSize: pagination ? JSON.parse(pagination).pageSize as number : 10,
       fetchCount: 0,
+      fetchPromises: {} as Record<string, Promise<void>>,
     };
   },
   getters: {
@@ -100,37 +101,47 @@ export const useNoticeStore = defineStore('notice', {
       await this.performFetchNotices(pageNum, sizeNum, force);
     },
     async performFetchNotices(pageNum: number, sizeNum: number, force: boolean = false) {
+      const cacheKey = `${pageNum}-${sizeNum}`;
+      if (this.fetchPromises[cacheKey]) {
+        return this.fetchPromises[cacheKey];
+      }
+
       const systemStore = useSystemStore();
       const toastStore = useToastStore();
       this.loading = true;
 
       const minDelay = 1000;
 
-      try {
-        const url = `/notices?page=${pageNum}&size=${sizeNum}`;
-        const [response] = await Promise.all([
-          api.get<PaginatedNotices>(url),
-          new Promise(resolve => setTimeout(resolve, minDelay))
-        ]);
-        
-        if (force || systemStore.updates.noticeLastUpdated > this.globalLastUpdated) {
-            this.notices = {};
+      this.fetchPromises[cacheKey] = (async () => {
+        try {
+          const url = `/notices?page=${pageNum}&size=${sizeNum}`;
+          const [response] = await Promise.all([
+            api.get<PaginatedNotices>(url),
+            new Promise(resolve => setTimeout(resolve, minDelay))
+          ]);
+          
+          if (force || systemStore.updates.noticeLastUpdated > this.globalLastUpdated) {
+              this.notices = {};
+          }
+
+          this.notices[pageNum] = response.content;
+          this.totalPages = response.totalPages;
+          this.totalElements = response.totalElements;
+          this.currentPage = response.pageNumber;
+          this.pageSize = response.pageSize;
+          this.globalLastUpdated = response.timestamp;
+          this.fetchCount++;
+
+          this.saveToLocalStorage();
+        } catch (error: any) {
+          toastStore.error('加载公告失败', error.message);
+        } finally {
+          this.loading = false;
+          delete this.fetchPromises[cacheKey];
         }
+      })();
 
-        this.notices[pageNum] = response.content;
-        this.totalPages = response.totalPages;
-        this.totalElements = response.totalElements;
-        this.currentPage = response.pageNumber;
-        this.pageSize = response.pageSize;
-        this.globalLastUpdated = response.timestamp;
-        this.fetchCount++;
-
-        this.saveToLocalStorage();
-      } catch (error: any) {
-        toastStore.error('加载公告失败', error.message);
-      } finally {
-        this.loading = false;
-      }
+      return this.fetchPromises[cacheKey];
     },
     async fetchNoticeById(id: number) {
       const toastStore = useToastStore();

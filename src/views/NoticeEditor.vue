@@ -149,7 +149,6 @@ const saveNotice = async () => {
       await api.post('/notices', form.value);
       toast.success('公告发布成功');
     }
-    await noticeStore.fetchNotices();
     
     // Redirect logic: use redirect query param if available, otherwise default to /notices
     const redirectPath = route.query.redirect as string;
