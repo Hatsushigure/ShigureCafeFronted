@@ -9,7 +9,7 @@
       maxlength="1"
       inputmode="numeric"
       pattern="[0-9]*"
-      class="w-full h-14 text-center text-2xl font-bold border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white/50 transition-all duration-200"
+      class="w-full h-14 text-center text-2xl font-bold border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 bg-white/50 transition-all duration-200"
       @input="handleInput(index, $event)"
       @keydown="handleKeyDown(index, $event)"
     />

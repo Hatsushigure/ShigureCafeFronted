@@ -3,20 +3,20 @@
     :type="type"
     :disabled="disabled || loading"
     :class="[
-      'group relative flex items-center justify-center py-3 px-4 border text-sm font-bold rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]',
+      'group relative flex items-center justify-center py-3 px-4 border text-sm font-bold rounded-xl transition-all duration-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]',
       variant === 'primary' 
-        ? 'text-white border-transparent bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:ring-indigo-500 shadow-lg hover:shadow-xl' 
+        ? 'text-white border-transparent bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl' 
         : variant === 'secondary'
-        ? 'text-blue-600 border-blue-200 bg-blue-50/50 hover:bg-blue-100 hover:border-blue-300 focus:ring-blue-500 shadow-sm'
+        ? 'text-blue-600 border-blue-200 bg-blue-50/50 hover:bg-blue-100 hover:border-blue-300 shadow-sm'
         : variant === 'danger'
-        ? 'text-red-700 border-red-200 bg-red-50 hover:bg-red-100 hover:border-red-300 focus:ring-red-500 shadow-sm'
+        ? 'text-red-700 border-red-200 bg-red-50 hover:bg-red-100 hover:border-red-300 shadow-sm'
         : variant === 'warning'
-        ? 'text-yellow-700 border-yellow-200 bg-yellow-50 hover:bg-yellow-100 hover:border-yellow-300 focus:ring-yellow-500 shadow-sm'
+        ? 'text-yellow-700 border-yellow-200 bg-yellow-50 hover:bg-yellow-100 hover:border-yellow-300 shadow-sm'
         : variant === 'ghost'
-        ? 'text-gray-500 border-transparent bg-transparent hover:bg-gray-100 hover:text-gray-700 focus:ring-gray-500'
+        ? 'text-gray-500 border-transparent bg-transparent hover:bg-gray-100 hover:text-gray-700'
         : variant === 'outline'
-        ? 'text-gray-700 border-gray-300 bg-white hover:bg-gray-50 hover:border-gray-400 shadow-sm focus:ring-blue-500'
-        : 'text-white border-transparent bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:ring-indigo-500 shadow-lg hover:shadow-xl',
+        ? 'text-gray-700 border-gray-300 bg-white hover:bg-gray-50 hover:border-gray-400 shadow-sm'
+        : 'text-white border-transparent bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl',
       fullWidth ? 'w-full' : ''
     ]"
     @click="$emit('click', $event)"

@@ -45,7 +45,7 @@
                   ref="searchInput"
                   type="text"
                   placeholder="搜索用户名/邮箱/MC..."
-                  class="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all duration-200"
+                  class="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:border-blue-500 sm:text-sm transition-all duration-200"
                   @keyup.esc="isSearchExpanded = false"
                 />
                 <!-- Mobile Close button -->
@@ -214,7 +214,7 @@
                 <button 
                 @click="showRoleDropdown = !showRoleDropdown"
                 type="button"
-                class="relative w-full bg-white/50 border border-gray-300 rounded-xl shadow-sm pl-4 pr-10 py-2.5 text-left cursor-default focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 sm:text-sm transition-all duration-200"
+                class="relative w-full bg-white/50 border border-gray-300 rounded-xl shadow-sm pl-4 pr-10 py-2.5 text-left cursor-default focus:outline-none focus:border-blue-500 sm:text-sm transition-all duration-200"
               >
                 <span class="block truncate font-medium text-gray-900">{{ formatRole(editForm.role) }}</span>
                 <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">

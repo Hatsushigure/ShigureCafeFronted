@@ -15,8 +15,8 @@
           :autocomplete="autocomplete"
           :disabled="disabled"
           :class="[
-            'appearance-none rounded-xl relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 sm:text-sm transition-all duration-200 ease-in-out bg-white/50 focus:bg-white disabled:opacity-50 disabled:cursor-not-allowed',
-            error ? 'border-red-300 focus:ring-red-500/20 focus:border-red-500' : ''
+            'appearance-none rounded-xl relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 focus:outline-none focus:border-blue-500 sm:text-sm transition-all duration-200 ease-in-out bg-white/50 focus:bg-white disabled:opacity-50 disabled:cursor-not-allowed',
+            error ? 'border-red-300 focus:border-red-500' : ''
           ]"
         />
         <slot name="suffix"></slot>

@@ -16,7 +16,7 @@
           type="text"
           inputmode="numeric"
           pattern="[0-9]*"
-          class="w-10 px-1 py-1.5 text-sm text-center border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+          class="w-10 px-1 py-1.5 text-sm text-center border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
           @keyup.enter="handleJump"
           @blur="jumpPageInput = (currentPage + 1).toString()"
         />
@@ -52,7 +52,7 @@
             <input
               v-model="jumpPageInput"
               type="text"
-              class="w-12 px-2 py-1 text-sm text-center border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              class="w-12 px-2 py-1 text-sm text-center border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
               @keyup.enter="handleJump"
               @blur="jumpPageInput = (currentPage + 1).toString()"
             />
@@ -84,7 +84,7 @@
               @click="$emit('page-change', page)"
               :class="[
                 page === currentPage
-                  ? 'relative z-10 inline-flex items-center bg-blue-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
+                  ? 'relative z-10 inline-flex items-center bg-blue-600 px-4 py-2 text-sm font-semibold text-white focus:z-20'
                   : 'relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
               ]"
             >

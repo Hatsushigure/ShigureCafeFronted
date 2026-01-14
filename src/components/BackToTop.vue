@@ -3,7 +3,7 @@
     <button
       v-show="isVisible"
       @click="scrollToTop"
-      class="fixed bottom-8 right-8 p-3 rounded-full bg-white shadow-lg border border-gray-100 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 transition-all duration-300 z-40 group focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+      class="fixed bottom-8 right-8 p-3 rounded-full bg-white shadow-lg border border-gray-100 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 transition-all duration-300 z-40 group focus:outline-none"
       aria-label="回到顶部"
     >
       <ChevronUp class="h-6 w-6 group-hover:-translate-y-1 transition-transform duration-300" />
