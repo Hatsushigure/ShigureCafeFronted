@@ -135,14 +135,12 @@ import { ref, onMounted, computed, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '../stores/auth';
 import { useNoticeStore, type Notice } from '../stores/notice';
-import { useToastStore } from '../stores/toast';
 import { useSystemStore } from '../stores/system';
 import NavBar from '../components/NavBar.vue';
 import BaseButton from '../components/BaseButton.vue';
 import NoticeCard from '../components/NoticeCard.vue';
 import Modal from '../components/Modal.vue';
 import Pagination from '../components/Pagination.vue';
-import api from '../api';
 import {
   Loader2,
   Search, Plus, RotateCw, X, Trash2
@@ -150,7 +148,6 @@ import {
 
 const auth = useAuthStore();
 const noticeStore = useNoticeStore();
-const toast = useToastStore();
 const systemStore = useSystemStore();
 const { t } = useI18n();
 
@@ -202,12 +199,15 @@ const confirmDelete = (notice: Notice) => {
 const handleDelete = async () => {
   if (!selectedNotice.value) return;
   try {
-    await api.delete(`/notices/${selectedNotice.value.id}`);
-    toast.success(t('notices.messages.delete-success'));
+    await noticeStore.deleteNotice(selectedNotice.value.id);
     showDeleteModal.value = false;
-    handlePageChange(noticeStore.currentPage, true);
+    // We don't necessarily need to force refresh since the store action already updates the cache
+    // but if we want to ensure pagination is correct, a refresh might be good
+    if (noticeStore.currentNotices.length === 0 && noticeStore.currentPage > 0) {
+      handlePageChange(noticeStore.currentPage - 1);
+    }
   } catch (error: any) {
-    toast.error(t('notices.messages.delete-failed'), error.message);
+    // Handled by store
   }
 };
 

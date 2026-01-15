@@ -191,6 +191,26 @@ export const useNoticeStore = defineStore('notice', {
         throw error;
       }
     },
+    async deleteNotice(id: number) {
+      const { t } = i18n.global;
+      const toastStore = useToastStore();
+      try {
+        await api.delete(`/notices/${id}`);
+        // Remove from cache
+        Object.keys(this.notices).forEach(page => {
+          const pageNum = Number(page);
+          if (this.notices[pageNum]) {
+            this.notices[pageNum] = this.notices[pageNum].filter(n => n.id !== id);
+          }
+        });
+        delete this.reactions[id];
+        this.saveToLocalStorage();
+        toastStore.success(t('notices.messages.delete-success'));
+      } catch (error: any) {
+        toastStore.error(t('notices.messages.delete-failed'), error.message);
+        throw error;
+      }
+    },
     updateNoticeInCache(updatedNotice: Notice) {
       let found = false;
       const pages = Object.keys(this.notices);

@@ -13,12 +13,19 @@
               {{ t('notices.detail.title') }}
             </h1>
           </div>
-          <button v-if="auth.user?.role === 'ADMIN' && notice"
-            @click="$router.push(`/admin/notices/${notice.id}/edit?redirect=/notices/${notice.id}`)"
-            class="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors shadow-sm font-bold text-sm animate-slide-up animate-delay-50">
-            <Edit2 class="h-4 w-4" />
-            <span>{{ t('notices.detail.edit-button') }}</span>
-          </button>
+          <div class="flex items-center space-x-3">
+            <button v-if="auth.user?.role === 'ADMIN' && notice"
+              @click="$router.push(`/admin/notices/${notice.id}/edit?redirect=/notices/${notice.id}`)"
+              class="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors shadow-sm font-bold text-sm animate-slide-up animate-delay-50">
+              <Edit2 class="h-4 w-4" />
+              <span>{{ t('notices.detail.edit-button') }}</span>
+            </button>
+            <button v-if="auth.user?.role === 'ADMIN' && notice" @click="showDeleteModal = true"
+              class="flex items-center space-x-2 px-4 py-2 bg-red-50 text-red-600 border border-red-100 rounded-xl hover:bg-red-100 transition-colors shadow-sm font-bold text-sm animate-slide-up animate-delay-75">
+              <Trash2 class="h-4 w-4" />
+              <span>{{ t('notices.delete') }}</span>
+            </button>
+          </div>
         </div>
       </header>
       <main>
@@ -127,6 +134,24 @@
         </div>
       </main>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <Modal :show="showDeleteModal" :title="t('notices.delete-modal.title')" max-width="md" @close="showDeleteModal = false">
+      <div class="mt-2">
+        <p class="text-sm text-gray-500">
+          {{ t('notices.delete-modal.confirmation', { title: notice?.title }) }}
+        </p>
+      </div>
+
+      <template #footer>
+        <BaseButton variant="danger" :loading="deleting" @click="handleDelete">
+          {{ t('notices.delete-modal.confirm') }}
+        </BaseButton>
+        <BaseButton variant="outline" @click="showDeleteModal = false">
+          {{ t('common.cancel') }}
+        </BaseButton>
+      </template>
+    </Modal>
   </div>
 </template>
 
@@ -140,17 +165,23 @@ import { useSystemStore } from '../stores/system';
 import NavBar from '../components/NavBar.vue';
 import BaseCard from '../components/BaseCard.vue';
 import UserAvatar from '../components/UserAvatar.vue';
-import { Loader2, ArrowLeft, Edit2, Plus } from 'lucide-vue-next';
+import Modal from '../components/Modal.vue';
+import BaseButton from '../components/BaseButton.vue';
+import { Loader2, ArrowLeft, Edit2, Plus, Trash2 } from 'lucide-vue-next';
 import { renderMarkdown } from '../utils/markdown';
 import { formatDateTime } from '../utils/formatters';
+import { useRouter } from 'vue-router';
 
 const { t } = useI18n();
 const route = useRoute();
+const router = useRouter();
 const auth = useAuthStore();
 const noticeStore = useNoticeStore();
 const systemStore = useSystemStore();
 const notice = ref<Notice | null>(null);
 const loading = ref(true);
+const deleting = ref(false);
+const showDeleteModal = ref(false);
 const showEmojiPicker = ref(false);
 const emojiPickerContainer = ref<HTMLElement | null>(null);
 const pickerAlignment = ref({ top: true, left: true });
@@ -191,6 +222,20 @@ const handleReaction = async (type: string) => {
     // State updates automatically via store
   } catch (error) {
     // Handled by store/toast
+  }
+};
+
+const handleDelete = async () => {
+  if (!notice.value) return;
+  deleting.value = true;
+  try {
+    await noticeStore.deleteNotice(notice.value.id);
+    router.push('/notices');
+  } catch (error) {
+    // Handled by store
+  } finally {
+    deleting.value = false;
+    showDeleteModal.value = false;
   }
 };
 
