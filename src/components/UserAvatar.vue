@@ -3,7 +3,8 @@
     :class="[
       avatarColor, 
       sizeClass,
-      'rounded-full flex items-center justify-center text-white font-bold shadow-sm border-2 border-white ring-2 ring-gray-50 flex-shrink-0 transition-transform duration-200 hover:scale-105'
+      'rounded-full flex items-center justify-center text-white font-bold shadow-sm border-2 border-white ring-2 ring-gray-50 flex-shrink-0 transition-transform duration-200 hover:scale-105',
+      customClass
     ]"
     :title="name"
   >
@@ -16,10 +17,12 @@ import { computed } from 'vue';
 
 const props = withDefaults(defineProps<{
   name?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  customClass?: string;
 }>(), {
   name: '?',
-  size: 'md'
+  size: 'md',
+  customClass: ''
 });
 
 const initial = computed(() => {
@@ -28,8 +31,11 @@ const initial = computed(() => {
 
 const sizeClass = computed(() => {
   switch (props.size) {
+    case 'xs': return 'h-6 w-6 text-[10px]';
     case 'sm': return 'h-8 w-8 text-xs';
     case 'lg': return 'h-12 w-12 text-lg';
+    case 'xl': return 'h-16 w-16 text-xl';
+    case '2xl': return 'h-24 w-24 text-4xl';
     case 'md':
     default: return 'h-9 w-9 text-sm';
   }

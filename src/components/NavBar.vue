@@ -88,10 +88,7 @@
                 class="flex items-center max-w-xs bg-white rounded-full focus:outline-none transition-all duration-200 p-0.5 hover:bg-gray-50"
                 id="user-menu-button" aria-expanded="false" aria-haspopup="true">
                 <span class="sr-only">{{ t('nav.open-user-menu') }}</span>
-                <div
-                  :class="[avatarColor, 'w-9 h-9 rounded-full flex items-center justify-center text-white font-bold shadow-sm border-2 border-white ring-2 ring-gray-50']">
-                  {{ avatarChar }}
-                </div>
+                <UserAvatar :name="auth.user.nickname || auth.user.username" size="md" />
               </button>
             </div>
 
@@ -150,10 +147,7 @@
       leave-to-class="transform -translate-y-2 opacity-0">
       <div v-if="isOpen" class="sm:hidden absolute w-full bg-white shadow-lg border-b border-gray-100" id="mobile-menu">
         <div v-if="auth.user" class="pt-4 pb-3 border-b border-gray-200 px-4 flex items-center bg-gray-50/50">
-          <div
-            :class="[avatarColor, 'w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-sm border-2 border-white']">
-            {{ avatarChar }}
-          </div>
+          <UserAvatar :name="auth.user.nickname || auth.user.username" size="lg" />
           <div class="ml-3">
             <div class="text-base font-medium text-gray-800">{{ auth.user.nickname || auth.user.username }}</div>
             <div class="text-sm font-medium text-gray-500">{{ auth.user.email }}</div>
@@ -214,6 +208,7 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { useI18n } from 'vue-i18n';
 import { Languages } from 'lucide-vue-next';
+import UserAvatar from './UserAvatar.vue';
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -294,25 +289,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('click', closeMenu);
-});
-
-const avatarChar = computed(() => {
-  const name = auth.user?.nickname || auth.user?.username || '?';
-  return name.charAt(0).toUpperCase();
-});
-
-const avatarColor = computed(() => {
-  const name = auth.user?.nickname || auth.user?.username || '';
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const colors = [
-    'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-red-500',
-    'bg-indigo-500', 'bg-purple-500', 'bg-pink-500', 'bg-teal-500',
-    'bg-orange-500', 'bg-cyan-500'
-  ];
-  return colors[Math.abs(hash) % colors.length];
 });
 
 const handleLogout = async () => {

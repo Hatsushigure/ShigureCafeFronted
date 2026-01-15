@@ -110,10 +110,7 @@
 
                     <div class="mt-10 flex items-center justify-between border-t border-gray-100 pt-6">
                       <div class="flex items-center text-sm text-gray-500">
-                        <div
-                          class="mr-3 h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold">
-                          {{ notice.authorNickname?.charAt(0) || '?' }}
-                        </div>
+                        <UserAvatar :name="notice.authorNickname" size="sm" custom-class="mr-3" />
                         <div>
                           <span class="font-bold text-gray-900 block">{{ notice.authorNickname }}</span>
                           <span v-if="notice.updatedAt !== notice.createdAt" class="text-xs text-gray-400 italic">
@@ -142,6 +139,7 @@ import { useNoticeStore, type Notice } from '../stores/notice';
 import { useSystemStore } from '../stores/system';
 import NavBar from '../components/NavBar.vue';
 import BaseCard from '../components/BaseCard.vue';
+import UserAvatar from '../components/UserAvatar.vue';
 import { Loader2, ArrowLeft, Edit2, Plus } from 'lucide-vue-next';
 import { renderMarkdown } from '../utils/markdown';
 import { formatDateTime } from '../utils/formatters';

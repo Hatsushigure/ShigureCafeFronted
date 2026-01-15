@@ -16,25 +16,13 @@
             <BaseCard :title="t('profile.basic-info.title')" :subtitle="t('profile.basic-info.subtitle')">
               <div
                 class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 mb-8 pb-8 border-b border-gray-100">
-                <div
-                  :class="[avatarColor, 'w-24 h-24 rounded-full flex items-center justify-center text-white text-4xl font-bold shadow-md border-4 border-white ring-4 ring-gray-50 flex-shrink-0']">
-                  {{ avatarChar }}
-                </div>
+                <UserAvatar :name="auth.user?.nickname || auth.user?.username" size="2xl" />
                 <div class="text-center sm:text-left">
                   <h2 class="text-2xl font-bold text-gray-900">{{ auth.user?.nickname || auth.user?.username }}</h2>
                   <p class="text-gray-500">{{ auth.user?.email }}</p>
                   <div class="mt-2 flex flex-wrap justify-center sm:justify-start gap-2">
-                    <span class="px-2.5 py-0.5 inline-flex text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                      {{ auth.user?.role ? t('common.roles.' + auth.user.role) : '' }}
-                    </span>
-                    <span :class="[
-                      'px-2.5 py-0.5 inline-flex text-xs font-medium rounded-full',
-                      auth.user?.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
-                        auth.user?.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
-                    ]">
-                      {{ auth.user?.status ? t('common.statuses.' + auth.user.status) : '' }}
-                    </span>
+                    <RoleBadge v-if="auth.user?.role" :role="auth.user.role" />
+                    <StatusBadge v-if="auth.user?.status" :status="auth.user.status" />
                   </div>
                 </div>
               </div>
@@ -49,7 +37,7 @@
                   <dt class="text-sm font-medium text-gray-500">{{ t('profile.basic-info.nickname') }}</dt>
                   <dd class="mt-1 text-sm text-gray-900 flex items-center space-x-2">
                     <span class="font-medium text-gray-900">{{ auth.user?.nickname || t('profile.basic-info.not-set')
-                    }}</span>
+                      }}</span>
                     <button @click="openNicknameModal"
                       class="text-blue-600 hover:text-blue-700 text-xs font-bold border border-blue-200 rounded px-2 py-0.5 hover:bg-blue-50 transition-colors">{{
                         t('profile.basic-info.modify') }}</button>
@@ -59,9 +47,7 @@
                 <div class="sm:col-span-1">
                   <dt class="text-sm font-medium text-gray-500">{{ t('profile.basic-info.role') }}</dt>
                   <dd class="mt-1 text-sm text-gray-900">
-                    <span class="px-2.5 py-0.5 inline-flex text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                      {{ auth.user?.role ? t('common.roles.' + auth.user.role) : '' }}
-                    </span>
+                    <RoleBadge v-if="auth.user?.role" :role="auth.user.role" />
                   </dd>
                 </div>
 
@@ -75,14 +61,7 @@
                 <div class="sm:col-span-1">
                   <dt class="text-sm font-medium text-gray-500">{{ t('profile.basic-info.status') }}</dt>
                   <dd class="mt-1 text-sm text-gray-900">
-                    <span :class="[
-                      'px-2.5 py-0.5 inline-flex text-xs font-medium rounded-full',
-                      auth.user?.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
-                        auth.user?.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
-                    ]">
-                      {{ auth.user?.status ? t('common.statuses.' + auth.user.status) : '' }}
-                    </span>
+                    <StatusBadge v-if="auth.user?.status" :status="auth.user.status" />
                   </dd>
                 </div>
               </dl>
@@ -137,7 +116,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '../stores/auth';
 import { useToastStore } from '../stores/toast';
@@ -146,6 +125,9 @@ import BaseCard from '../components/BaseCard.vue';
 import BaseInput from '../components/BaseInput.vue';
 import BaseButton from '../components/BaseButton.vue';
 import Modal from '../components/Modal.vue';
+import UserAvatar from '../components/UserAvatar.vue';
+import RoleBadge from '../components/RoleBadge.vue';
+import StatusBadge from '../components/StatusBadge.vue';
 import api from '../api';
 import { RotateCw } from 'lucide-vue-next';
 
@@ -183,25 +165,6 @@ const handleRefreshMinecraft = async () => {
     refreshLoading.value = false;
   }
 };
-
-const avatarChar = computed(() => {
-  const name = auth.user?.nickname || auth.user?.username || '?';
-  return name.charAt(0).toUpperCase();
-});
-
-const avatarColor = computed(() => {
-  const name = auth.user?.nickname || auth.user?.username || '';
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const colors = [
-    'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-red-500',
-    'bg-indigo-500', 'bg-purple-500', 'bg-pink-500', 'bg-teal-500',
-    'bg-orange-500', 'bg-cyan-500'
-  ];
-  return colors[Math.abs(hash) % colors.length];
-});
 
 // Nickname Update Logic
 const showNicknameModal = ref(false);
