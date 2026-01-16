@@ -120,9 +120,13 @@
       </template>
     </Modal>
 
-    <!-- Avatar Crop Modal -->
-    <Modal :show="showCropModal" :title="t('profile.avatar-crop-title')" @close="showCropModal = false">
-      <ImageCropper v-if="cropImgSrc" ref="cropperRef" :img-src="cropImgSrc" />
+          <!-- Avatar Crop Modal -->
+
+          <Modal :show="showCropModal" :title="t('profile.avatar-crop-title')" @close="closeCropModal">
+
+            <ImageCropper v-if="cropImgSrc" ref="cropperRef" :img-src="cropImgSrc" />
+
+    
       <template #footer>
         <BaseButton @click="handleCropSave" :loading="uploadLoading" :label="t('common.confirm')"
           :loading-text="t('common.processing')" />
@@ -133,7 +137,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '../stores/auth';
 import { useToastStore } from '../stores/toast';
@@ -149,6 +153,7 @@ import ImageCropper from '../components/ImageCropper.vue';
 import api from '../api';
 import axios from 'axios';
 import { RotateCw, Camera } from 'lucide-vue-next';
+import { cacheAvatar } from '../utils/avatarCache';
 
 const { t } = useI18n();
 const auth = useAuthStore();
@@ -171,20 +176,13 @@ const handleAvatarChange = async (event: Event) => {
   const file = target.files?.[0];
   if (!file) return;
 
-  if (file.size > 2 * 1024 * 1024) {
-    toastStore.error(t('profile.messages.avatar-too-large'), t('profile.messages.avatar-too-large-detail'));
-    return;
+  // No more hard limit here, as we resize the image anyway.
+  // Using ObjectURL is much more memory efficient than FileReader/Base64.
+  if (cropImgSrc.value.startsWith('blob:')) {
+    URL.revokeObjectURL(cropImgSrc.value);
   }
-
-  // Read file as Data URL for cropping
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    if (typeof e.target?.result === 'string') {
-      cropImgSrc.value = e.target.result;
-      showCropModal.value = true;
-    }
-  };
-  reader.readAsDataURL(file);
+  cropImgSrc.value = URL.createObjectURL(file);
+  showCropModal.value = true;
 };
 
 const handleCropSave = async () => {
@@ -194,6 +192,12 @@ const handleCropSave = async () => {
   try {
     const blob = await cropperRef.value.getCropBlob();
     if (!blob) throw new Error('Failed to create blob');
+
+    // Strict check remains to prevent extreme cases/malicious blobs
+    if (blob.size > 2 * 1024 * 1024) {
+      toastStore.error(t('profile.messages.avatar-too-large'), t('profile.messages.avatar-too-large-detail'));
+      return;
+    }
 
     // 1. Get presigned URL
     const { uploadUrl, publicUrl } = await api.get<{ uploadUrl: string, publicUrl: string }>(
@@ -209,16 +213,27 @@ const handleCropSave = async () => {
     // 3. Notify backend to update user record
     await api.put(`/users/${auth.user.username}/avatar`, { avatarUrl: publicUrl });
 
+    // 4. Update local cache
+    await cacheAvatar(publicUrl, blob);
+
     toastStore.success(t('profile.messages.avatar-update-success'), t('profile.messages.avatar-update-detail'));
     await auth.fetchCurrentUser(true);
-    showCropModal.value = false;
+    closeCropModal();
   } catch (e: any) {
     toastStore.error(t('profile.messages.avatar-update-failed'), e.message || t('profile.messages.system-error'));
   } finally {
     uploadLoading.value = false;
-    if (avatarInput.value) {
-      avatarInput.value.value = '';
-    }
+  }
+};
+
+const closeCropModal = () => {
+  showCropModal.value = false;
+  if (cropImgSrc.value.startsWith('blob:')) {
+    URL.revokeObjectURL(cropImgSrc.value);
+    cropImgSrc.value = '';
+  }
+  if (avatarInput.value) {
+    avatarInput.value.value = '';
   }
 };
 
@@ -275,6 +290,12 @@ const handleUpdateNickname = async () => {
     nicknameLoading.value = false;
   }
 };
+
+onUnmounted(() => {
+  if (cropImgSrc.value.startsWith('blob:')) {
+    URL.revokeObjectURL(cropImgSrc.value);
+  }
+});
 
 onMounted(async () => {
   if (!auth.user) {

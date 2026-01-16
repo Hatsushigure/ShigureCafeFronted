@@ -96,11 +96,61 @@ const rotateRight = () => {
 
 const getCropBlob = (): Promise<Blob> => {
   return new Promise((resolve, reject) => {
-    cropper.value?.getCropBlob((data: Blob) => {
-      if (data) {
-        resolve(data);
-      } else {
+    cropper.value?.getCropBlob(async (data: Blob) => {
+      if (!data) {
         reject(new Error('Failed to get crop blob'));
+        return;
+      }
+
+      try {
+        // Resize to max 512x512 and convert to PNG
+        const image = new Image();
+        const url = URL.createObjectURL(data);
+        
+        image.onload = () => {
+          URL.revokeObjectURL(url);
+          const canvas = document.createElement('canvas');
+          let width = image.width;
+          let height = image.height;
+
+          // Calculate dimensions to fit 512x512 while maintaining aspect ratio
+          // Since it's a square crop, it should already be 1:1
+          if (width > 512 || height > 512) {
+            if (width > height) {
+              height = Math.round((height * 512) / width);
+              width = 512;
+            } else {
+              width = Math.round((width * 512) / height);
+              height = 512;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Failed to get canvas context'));
+            return;
+          }
+
+          ctx.drawImage(image, 0, 0, width, height);
+          canvas.toBlob((blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error('Failed to create blob from canvas'));
+            }
+          }, 'image/png');
+        };
+
+        image.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error('Failed to load image for resizing'));
+        };
+
+        image.src = url;
+      } catch (e) {
+        reject(e);
       }
     });
   });

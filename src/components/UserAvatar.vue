@@ -1,20 +1,21 @@
 <template>
   <div 
     :class="[
-      !src ? avatarColor : 'bg-gray-100', 
+      !displaySrc ? avatarColor : 'bg-gray-100', 
       sizeClass,
       'rounded-full flex items-center justify-center text-white font-bold shadow-sm border-2 border-white ring-2 ring-gray-50 flex-shrink-0 transition-transform duration-200 hover:scale-105 overflow-hidden',
       customClass
     ]"
     :title="name"
   >
-    <img v-if="src" :src="src" class="h-full w-full object-cover" :alt="name" />
+    <img v-if="displaySrc" :src="displaySrc" class="h-full w-full object-cover" :alt="name" />
     <span v-else>{{ initial }}</span>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch, onUnmounted } from 'vue';
+import { getCachedAvatar, cacheAvatar } from '../utils/avatarCache';
 
 const props = withDefaults(defineProps<{
   name?: string;
@@ -25,6 +26,78 @@ const props = withDefaults(defineProps<{
   name: '?',
   size: 'md',
   customClass: ''
+});
+
+const displaySrc = ref<string | undefined>(undefined);
+let currentObjectUrl: string | null = null;
+
+const cleanup = () => {
+  if (currentObjectUrl) {
+    URL.revokeObjectURL(currentObjectUrl);
+    currentObjectUrl = null;
+  }
+};
+
+const loadAvatar = async () => {
+  const targetSrc = props.src;
+  
+  if (!targetSrc) {
+    cleanup();
+    displaySrc.value = undefined;
+    return;
+  }
+
+  // If it's already a special URL (data or blob), just use it
+  if (targetSrc.startsWith('data:') || targetSrc.startsWith('blob:')) {
+    cleanup();
+    displaySrc.value = targetSrc;
+    return;
+  }
+
+  // Try to get from cache
+  const cachedUrl = await getCachedAvatar(targetSrc);
+  
+  // Check if props.src changed while we were checking the cache
+  if (props.src !== targetSrc) {
+    if (cachedUrl) URL.revokeObjectURL(cachedUrl);
+    return;
+  }
+
+  if (cachedUrl) {
+    cleanup();
+    currentObjectUrl = cachedUrl;
+    displaySrc.value = cachedUrl;
+    return;
+  }
+
+  // Not in cache, fetch and store
+  try {
+    const response = await fetch(targetSrc);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const blob = await response.blob();
+    
+    // Only proceed if the src hasn't changed while we were fetching
+    if (props.src === targetSrc) {
+      await cacheAvatar(targetSrc, blob);
+      const newUrl = URL.createObjectURL(blob);
+      cleanup();
+      currentObjectUrl = newUrl;
+      displaySrc.value = newUrl;
+    }
+  } catch (e) {
+    console.error('Failed to load/cache avatar:', e);
+    // Fallback to original URL if fetch fails
+    if (props.src === targetSrc) {
+      cleanup();
+      displaySrc.value = targetSrc;
+    }
+  }
+};
+
+watch(() => props.src, loadAvatar, { immediate: true });
+
+onUnmounted(() => {
+  cleanup();
 });
 
 const initial = computed(() => {
