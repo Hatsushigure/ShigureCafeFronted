@@ -134,7 +134,8 @@
 import { ref, onMounted, computed, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '../stores/auth';
-import { useNoticeStore, type Notice } from '../stores/notice';
+import { useNoticeStore } from '../stores/notice';
+import type { Notice } from '../types/notice';
 import { useSystemStore } from '../stores/system';
 import { useUserStore } from '../stores/user';
 import NavBar from '../components/NavBar.vue';

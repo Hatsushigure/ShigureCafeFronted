@@ -3,37 +3,13 @@ import api from '../api';
 import { useSystemStore } from './system';
 import { useToastStore } from './toast';
 import i18n from '../locales';
+import type { Notice, PaginatedNotices, ReactionCount } from '../types/notice';
+import * as noticeCache from '../utils/noticeCache';
 
 const { t } = i18n.global;
 
-export interface ReactionCount {
-  type: string;
-  count: number;
-  reacted: boolean;
-}
-
-export interface Notice {
-  id: number;
-  title: string;
-  content: string;
-  pinned: boolean;
-  authorUsername: string;
-  createdAt: number;
-  updatedAt: number;
-}
-
-export interface PaginatedNotices {
-  content: Notice[];
-  totalPages: number;
-  totalElements: number;
-  pageSize: number;
-  pageNumber: number;
-  timestamp: number;
-}
-
 export const useNoticeStore = defineStore('notice', {
   state: () => {
-    const cachedRecords = localStorage.getItem('notice_records_cache');
     const cachedPages = localStorage.getItem('notice_pages_cache');
     const pagination = localStorage.getItem('notice_pagination');
     const globalLastUpdated = localStorage.getItem('notice_global_last_updated');
@@ -46,8 +22,8 @@ export const useNoticeStore = defineStore('notice', {
     };
 
     return {
-      // Data records: id -> Notice object
-      records: (cachedRecords ? JSON.parse(cachedRecords) : {}) as Record<number, Notice>,
+      // Data records: id -> Notice object (Memory cache)
+      records: {} as Record<number, Notice>,
       
       // Page mapping: pageNumber -> array of IDs
       pages: (cachedPages ? JSON.parse(cachedPages) : {}) as Record<number, number[]>,
@@ -62,6 +38,7 @@ export const useNoticeStore = defineStore('notice', {
       totalPages: pag.totalPages,
       
       fetchPromises: {} as Record<string, Promise<any>>,
+      recordsLoaded: false,
     };
   },
   getters: {
@@ -84,7 +61,18 @@ export const useNoticeStore = defineStore('notice', {
     })
   },
   actions: {
+    async ensureRecordsLoaded() {
+      if (this.recordsLoaded) return;
+      
+      const cached = await noticeCache.getAllNotices();
+      cached.forEach(n => {
+        this.records[n.id] = n;
+      });
+      this.recordsLoaded = true;
+    },
+
     async fetchNotices(page: number = 0, size: number = 10, force: boolean = false) {
+      await this.ensureRecordsLoaded();
       const systemStore = useSystemStore();
       const pageNum = page;
       const sizeNum = size;
@@ -138,10 +126,11 @@ export const useNoticeStore = defineStore('notice', {
             ? {} as Record<number, number[]>
             : { ...this.pages };
 
-          // Update records map
+          // Update records map and IndexedDB
           response.content.forEach(notice => {
             this.records[notice.id] = notice;
           });
+          await noticeCache.saveNotices(response.content);
 
           // Update page mapping
           newPages[pageNum] = response.content.map(n => n.id);
@@ -166,6 +155,7 @@ export const useNoticeStore = defineStore('notice', {
     },
 
     async fetchNoticeById(id: number) {
+      await this.ensureRecordsLoaded();
       if (this.records[id] && !this.isCacheExpired()) {
         return this.records[id];
       }
@@ -182,6 +172,7 @@ export const useNoticeStore = defineStore('notice', {
         try {
           const data = await api.get<Notice>(`/notices/${id}`);
           this.records[id] = data;
+          await noticeCache.saveNotice(data);
           this.saveToLocalStorage();
           return data;
         } catch (error: any) {
@@ -201,6 +192,7 @@ export const useNoticeStore = defineStore('notice', {
       try {
         const data = await api.post<Notice>('/notices', noticeData);
         this.records[data.id] = data;
+        await noticeCache.saveNotice(data);
         
         // No manual refresh here. The next navigation to the list page
         // will trigger the background refresh logic in fetchNotices.
@@ -218,6 +210,7 @@ export const useNoticeStore = defineStore('notice', {
       try {
         const data = await api.put<Notice>(`/notices/${id}`, noticeData);
         this.records[id] = data;
+        await noticeCache.saveNotice(data);
         
         this.saveToLocalStorage();
         return data;
@@ -233,6 +226,7 @@ export const useNoticeStore = defineStore('notice', {
         await api.delete(`/notices/${id}`);
         delete this.records[id];
         delete this.reactions[id];
+        await noticeCache.deleteNotice(id);
         
         this.saveToLocalStorage();
         toastStore.success(t('notices.messages.delete-success'));
@@ -285,20 +279,21 @@ export const useNoticeStore = defineStore('notice', {
     },
 
     saveToLocalStorage() {
-      localStorage.setItem('notice_records_cache', JSON.stringify(this.records));
       localStorage.setItem('notice_pages_cache', JSON.stringify(this.pages));
       localStorage.setItem('notice_global_last_updated', this.globalLastUpdated.toString());
       localStorage.setItem('notice_pagination', JSON.stringify(this.pagination));
     },
 
-    clearCache() {
+    async clearCache() {
       this.records = {};
       this.pages = {};
       this.globalLastUpdated = 0;
+      this.recordsLoaded = false;
       localStorage.removeItem('notice_records_cache');
       localStorage.removeItem('notice_pages_cache');
       localStorage.removeItem('notice_global_last_updated');
       localStorage.removeItem('notice_pagination');
+      await noticeCache.clearNotices();
     }
   },
 });

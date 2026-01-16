@@ -99,7 +99,8 @@ import BaseCard from './BaseCard.vue';
 import UserAvatar from './UserAvatar.vue';
 import { formatDateTime } from '../utils/formatters';
 import { renderMarkdown } from '../utils/markdown';
-import { useNoticeStore, type Notice } from '../stores/notice';
+import { useNoticeStore } from '../stores/notice';
+import type { Notice } from '../types/notice';
 import { useSystemStore } from '../stores/system';
 import { useUserStore } from '../stores/user';
 
