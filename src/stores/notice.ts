@@ -148,6 +148,7 @@ export const useNoticeStore = defineStore('notice', {
     },
     async fetchNoticeById(id: number) {
       const toastStore = useToastStore();
+      this.loading = true;
       try {
         const data = await api.get<Notice>(`/notices/${id}`);
         this.updateNoticeInCache(data);
@@ -155,6 +156,8 @@ export const useNoticeStore = defineStore('notice', {
       } catch (error: any) {
         toastStore.error(t('notices.messages.fetch-detail-failed'), error.message);
         throw error;
+      } finally {
+        this.loading = false;
       }
     },
     async createNotice(noticeData: any) {
@@ -222,13 +225,8 @@ export const useNoticeStore = defineStore('notice', {
       const toastStore = useToastStore();
       try {
         await api.delete(`/notices/${id}`);
-        // Remove from cache
-        Object.keys(this.notices).forEach(page => {
-          const pageNum = Number(page);
-          if (this.notices[pageNum]) {
-            this.notices[pageNum] = this.notices[pageNum].filter(n => n.id !== id);
-          }
-        });
+        // Clear notices cache because the pagination is now definitely invalid
+        this.notices = {};
         delete this.reactions[id];
         this.saveToLocalStorage();
         toastStore.success(t('notices.messages.delete-success'));

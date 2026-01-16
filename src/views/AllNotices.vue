@@ -201,11 +201,13 @@ const handleDelete = async () => {
   try {
     await noticeStore.deleteNotice(selectedNotice.value.id);
     showDeleteModal.value = false;
-    // We don't necessarily need to force refresh since the store action already updates the cache
-    // but if we want to ensure pagination is correct, a refresh might be good
-    if (noticeStore.currentNotices.length === 0 && noticeStore.currentPage > 0) {
-      handlePageChange(noticeStore.currentPage - 1);
-    }
+    
+    // Always refresh to ensure list is full and pagination info is correct
+    const targetPage = (noticeStore.currentNotices.length === 0 && noticeStore.currentPage > 0)
+      ? noticeStore.currentPage - 1
+      : noticeStore.currentPage;
+    
+    await handlePageChange(targetPage, true);
   } catch (error: any) {
     // Handled by store
   }

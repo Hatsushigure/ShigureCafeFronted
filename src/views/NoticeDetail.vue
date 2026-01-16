@@ -31,15 +31,24 @@
       <main>
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 mt-8">
           <div class="px-4 sm:px-0 animate-slide-up animate-delay-100">
-            <div v-if="loading" class="bg-white shadow rounded-2xl p-12 flex justify-center items-center text-gray-400">
-              <Loader2 class="h-8 w-8 animate-spin" />
+            <div v-if="loading" class="bg-white shadow rounded-2xl p-12 flex justify-center items-center">
+              <div class="flex flex-col items-center space-y-4">
+                <Loader2 class="h-10 w-10 animate-spin text-indigo-600" />
+                <p class="text-gray-400 text-sm font-medium animate-pulse">{{ t('common.loading') }}</p>
+              </div>
             </div>
             <div v-else-if="!notice" class="bg-white shadow rounded-2xl p-12 text-center text-gray-500">
               <p>{{ t('notices.detail.not-found') }}</p>
               <button @click="$router.push('/notices')" class="mt-4 text-indigo-600 font-medium">{{
                 t('notices.detail.view-all') }}</button>
             </div>
-            <div v-else class="animate-slide-up animate-delay-150">
+            <div v-else class="relative animate-slide-up animate-delay-150">
+              <!-- Refreshing Overlay -->
+              <div v-if="noticeStore.loading" 
+                class="absolute inset-0 bg-white/40 backdrop-blur-[1px] z-10 flex items-center justify-center rounded-2xl transition-all duration-300">
+                <Loader2 class="h-8 w-8 animate-spin text-indigo-500" />
+              </div>
+
               <BaseCard body-class="p-8" :class="[
                 notice.pinned ? 'border-orange-200 bg-orange-50/30 ring-1 ring-orange-100' : 'border-gray-100',
                 '!overflow-visible'
@@ -241,7 +250,10 @@ const handleDelete = async () => {
 
 const fetchNotice = async () => {
   const id = Number(route.params.id);
-  if (isNaN(id)) return;
+  if (isNaN(id)) {
+    loading.value = false;
+    return;
+  }
 
   // Try to get from store first for immediate display
   const cached = noticeStore.getNoticeById(id);
