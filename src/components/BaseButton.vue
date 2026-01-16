@@ -16,8 +16,9 @@
                 : 'text-white border-transparent bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl',
     fullWidth ? 'w-full' : ''
   ]" @click="$emit('click', $event)">
-    <svg v-if="loading" class="animate-spin -ml-1 mr-2 h-5 w-5"
+    <svg v-if="loading" class="animate-spin -ml-1 h-5 w-5"
       :class="[
+        (loadingText || t('common.processing')) ? (hideLoadingTextOnMobile ? 'sm:mr-2' : 'mr-2') : '',
         variant === 'primary' ? 'text-white' : 
         variant === 'danger' ? 'text-red-600' :
         variant === 'warning' ? 'text-yellow-600' :
@@ -30,7 +31,9 @@
       </path>
     </svg>
     <template v-if="loading">
-      {{ loadingText || t('common.processing') }}
+      <span :class="{ 'hidden sm:inline': hideLoadingTextOnMobile }">
+        {{ loadingText || t('common.processing') }}
+      </span>
     </template>
     <slot v-else>
       {{ label }}
@@ -49,6 +52,7 @@ interface Props {
   disabled?: boolean;
   loading?: boolean;
   loadingText?: string;
+  hideLoadingTextOnMobile?: boolean;
   label?: string;
   fullWidth?: boolean;
 }
@@ -59,6 +63,7 @@ withDefaults(defineProps<Props>(), {
   disabled: false,
   loading: false,
   loadingText: '',
+  hideLoadingTextOnMobile: false,
   label: '',
   fullWidth: false
 });

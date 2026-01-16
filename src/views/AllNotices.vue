@@ -48,6 +48,7 @@
                 <span class="hidden sm:inline">{{ t('notices.publish') }}</span>
               </BaseButton>
               <BaseButton variant="secondary" @click="handlePageChange(0, true)" :loading="noticeStore.loading"
+                hide-loading-text-on-mobile
                 class="animate-slide-up animate-delay-50">
                 <RotateCw v-if="!noticeStore.loading" class="h-4 w-4 sm:mr-2" />
                 <span class="hidden sm:inline">{{ t('notices.refresh') }}</span>

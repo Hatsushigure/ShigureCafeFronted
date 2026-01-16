@@ -38,6 +38,7 @@
 
         <!-- Refresh Button -->
         <BaseButton v-show="!isSearchExpanded" variant="secondary" @click="$emit('refresh')" :loading="loading"
+          hide-loading-text-on-mobile
           class="animate-slide-up animate-delay-50">
           <RotateCw v-if="!loading" class="h-4 w-4 sm:mr-2" />
           <span class="hidden sm:inline">{{ t('common.refresh-list') }}</span>
