@@ -103,10 +103,14 @@
                             <div v-if="showEmojiPicker" :class="[
                               'absolute z-50 bg-white shadow-2xl border border-gray-100 rounded-2xl p-2 w-64',
                               pickerAlignment.top ? 'bottom-full mb-3' : 'top-full mt-3',
-                              pickerAlignment.left ? 'left-0' : 'right-0',
+                              {
+                                'left-0': pickerAlignment.horizontal === 'left',
+                                'right-0': pickerAlignment.horizontal === 'right',
+                                'left-1/2 -translate-x-1/2': pickerAlignment.horizontal === 'center'
+                              },
                               pickerAlignment.top
-                                ? (pickerAlignment.left ? 'origin-bottom-left' : 'origin-bottom-right')
-                                : (pickerAlignment.left ? 'origin-top-left' : 'origin-top-right')
+                                ? (pickerAlignment.horizontal === 'left' ? 'origin-bottom-left' : pickerAlignment.horizontal === 'right' ? 'origin-bottom-right' : 'origin-bottom')
+                                : (pickerAlignment.horizontal === 'left' ? 'origin-top-left' : pickerAlignment.horizontal === 'right' ? 'origin-top-right' : 'origin-top')
                             ]">
                               <div class="max-h-48 overflow-y-auto p-1 custom-scrollbar">
                                 <div class="grid grid-cols-5 gap-1">
@@ -198,7 +202,10 @@ const deleting = ref(false);
 const showDeleteModal = ref(false);
 const showEmojiPicker = ref(false);
 const emojiPickerContainer = ref<HTMLElement | null>(null);
-const pickerAlignment = ref({ top: true, left: true });
+const pickerAlignment = ref<{
+  top: boolean;
+  horizontal: 'left' | 'right' | 'center';
+}>({ top: true, horizontal: 'left' });
 
 const availableReactions = computed(() => systemStore.reactionTypes.map(r => r.name));
 const getEmoji = (type: string) => systemStore.reactionMap[type] || '❓';
@@ -213,11 +220,25 @@ const toggleEmojiPicker = (event: MouseEvent) => {
     const spaceAbove = rect.top;
     const spaceBelow = window.innerHeight - rect.bottom;
     const spaceRight = window.innerWidth - rect.left;
+    const spaceLeft = rect.right;
 
-    // 300px is roughly the height (max-h-48 + padding) + some margin
+    // 256px is the width of the picker (w-64)
+    const pickerWidth = 256;
+    const canFitRight = spaceRight > pickerWidth;
+    const canFitLeft = spaceLeft > pickerWidth;
+
+    let horizontal: 'left' | 'right' | 'center' = 'left';
+    if (canFitRight) {
+      horizontal = 'left';
+    } else if (canFitLeft) {
+      horizontal = 'right';
+    } else {
+      horizontal = 'center';
+    }
+
     pickerAlignment.value = {
       top: spaceAbove > 250 || spaceAbove > spaceBelow,
-      left: spaceRight > 260 // w-64 is 256px
+      horizontal
     };
   }
   showEmojiPicker.value = !showEmojiPicker.value;
