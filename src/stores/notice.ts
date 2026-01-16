@@ -17,8 +17,7 @@ export interface Notice {
   title: string;
   content: string;
   pinned: boolean;
-  authorNickname: string;
-  authorAvatarUrl?: string;
+  authorUsername: string;
   createdAt: number;
   updatedAt: number;
 }
@@ -42,6 +41,19 @@ export const useNoticeStore = defineStore('notice', {
       if (!data) return {};
       try {
         const parsed = JSON.parse(data);
+        const entries = Array.isArray(parsed) ? parsed : Object.entries(parsed);
+        
+        // Validation: Check if the first notice has authorUsername
+        // If not, it's an old format, return empty to force fresh fetch
+        for (const [_, notices] of entries) {
+          if (Array.isArray(notices) && notices.length > 0) {
+            if (!(notices[0] as any).authorUsername) {
+              console.log('Old notice cache format detected, clearing...');
+              return {};
+            }
+          }
+        }
+
         if (Array.isArray(parsed)) {
           return Object.fromEntries(parsed);
         }

@@ -136,6 +136,7 @@ import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '../stores/auth';
 import { useNoticeStore, type Notice } from '../stores/notice';
 import { useSystemStore } from '../stores/system';
+import { useUserStore } from '../stores/user';
 import NavBar from '../components/NavBar.vue';
 import BaseButton from '../components/BaseButton.vue';
 import NoticeCard from '../components/NoticeCard.vue';
@@ -149,6 +150,7 @@ import {
 const auth = useAuthStore();
 const noticeStore = useNoticeStore();
 const systemStore = useSystemStore();
+const userStore = useUserStore();
 const { t } = useI18n();
 
 const searchQuery = ref('');
@@ -169,10 +171,12 @@ const filteredNotices = computed(() => {
   const notices = noticeStore.currentNotices;
   if (!searchQuery.value) return notices;
   const q = searchQuery.value.toLowerCase();
-  return notices.filter(notice =>
-    notice.title.toLowerCase().includes(q) ||
-    notice.authorNickname?.toLowerCase().includes(q)
-  );
+  return notices.filter(notice => {
+    const profile = userStore.profiles[notice.authorUsername];
+    return notice.title.toLowerCase().includes(q) ||
+      notice.authorUsername.toLowerCase().includes(q) ||
+      profile?.nickname?.toLowerCase().includes(q);
+  });
 });
 
 const handlePageChange = async (page: number, force = false) => {
@@ -182,6 +186,7 @@ const handlePageChange = async (page: number, force = false) => {
   }
   await noticeStore.fetchNotices(page, 10, force);
   fetchReactions();
+  fetchAuthorProfiles();
 };
 
 const fetchReactions = () => {
@@ -189,6 +194,15 @@ const fetchReactions = () => {
   if (ids.length > 0) {
     noticeStore.fetchReactionsForList(ids);
   }
+};
+
+const fetchAuthorProfiles = () => {
+  const usernames = [...new Set(noticeStore.currentNotices.map(n => n.authorUsername))];
+  usernames.forEach(username => {
+    if (username) {
+      userStore.fetchProfile(username);
+    }
+  });
 };
 
 const confirmDelete = (notice: Notice) => {
@@ -220,5 +234,6 @@ onMounted(async () => {
   await noticeStore.fetchNotices();
   systemStore.fetchReactionTypes();
   fetchReactions();
+  fetchAuthorProfiles();
 });
 </script>

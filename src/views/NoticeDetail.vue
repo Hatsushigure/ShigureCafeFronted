@@ -126,9 +126,9 @@
 
                     <div class="mt-10 flex items-center justify-between border-t border-gray-100 pt-6">
                       <div class="flex items-center text-sm text-gray-500">
-                        <UserAvatar :name="notice.authorNickname" :src="notice.authorAvatarUrl" size="sm" custom-class="mr-3" />
+                        <UserAvatar :name="authorProfile?.nickname || notice.authorUsername" :src="authorProfile?.avatarUrl" size="sm" custom-class="mr-3" />
                         <div>
-                          <span class="font-bold text-gray-900 block">{{ notice.authorNickname }}</span>
+                          <span class="font-bold text-gray-900 block">{{ authorProfile?.nickname || notice.authorUsername }}</span>
                           <span v-if="notice.updatedAt !== notice.createdAt" class="text-xs text-gray-400 italic">
                             {{ t('notices.detail.edited-at', { time: formatDateTime(notice.updatedAt) }) }}
                           </span>
@@ -171,6 +171,7 @@ import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '../stores/auth';
 import { useNoticeStore, type Notice } from '../stores/notice';
 import { useSystemStore } from '../stores/system';
+import { useUserStore } from '../stores/user';
 import NavBar from '../components/NavBar.vue';
 import BaseCard from '../components/BaseCard.vue';
 import UserAvatar from '../components/UserAvatar.vue';
@@ -187,7 +188,10 @@ const router = useRouter();
 const auth = useAuthStore();
 const noticeStore = useNoticeStore();
 const systemStore = useSystemStore();
+const userStore = useUserStore();
 const notice = ref<Notice | null>(null);
+
+const authorProfile = computed(() => notice.value ? userStore.profiles[notice.value.authorUsername] : null);
 const loading = ref(true);
 const deleting = ref(false);
 const showDeleteModal = ref(false);
@@ -259,6 +263,7 @@ const fetchNotice = async () => {
   const cached = noticeStore.getNoticeById(id);
   if (cached) {
     notice.value = cached;
+    userStore.fetchProfile(cached.authorUsername);
     loading.value = false;
   } else {
     loading.value = true;
@@ -268,6 +273,8 @@ const fetchNotice = async () => {
     // Always fetch from server to ensure latest content
     const data = await noticeStore.fetchNoticeById(id);
     notice.value = data;
+    // Fetch author profile
+    userStore.fetchProfile(data.authorUsername);
     // Fetch reactions separately
     await noticeStore.fetchReactions(id);
   } catch (error) {

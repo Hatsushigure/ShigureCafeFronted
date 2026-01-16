@@ -58,8 +58,8 @@
 
         <div :class="['flex items-center justify-between border-t border-gray-50', compact ? 'mt-4 pt-3' : 'mt-6 pt-4']">
           <div class="flex items-center text-gray-500" :class="compact ? 'text-xs' : 'text-sm'">
-            <UserAvatar :name="notice.authorNickname" :src="notice.authorAvatarUrl" :size="compact ? 'xs' : 'sm'" class="mr-2" />
-            <span class="font-medium text-gray-900 mr-2">{{ notice.authorNickname }}</span>
+            <UserAvatar :name="authorProfile?.nickname || notice.authorUsername" :src="authorProfile?.avatarUrl" :size="compact ? 'xs' : 'sm'" class="mr-2" />
+            <span class="font-medium text-gray-900 mr-2">{{ authorProfile?.nickname || notice.authorUsername }}</span>
             <span v-if="notice.updatedAt !== notice.createdAt" class="italic">
               {{ t('notices.edited', { time: formatDateTime(notice.updatedAt) }) }}
             </span>
@@ -92,7 +92,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Megaphone, Bell, Edit2, Trash2, ChevronRight } from 'lucide-vue-next';
 import BaseCard from './BaseCard.vue';
@@ -101,6 +101,7 @@ import { formatDateTime } from '../utils/formatters';
 import { renderMarkdown } from '../utils/markdown';
 import { useNoticeStore, type Notice } from '../stores/notice';
 import { useSystemStore } from '../stores/system';
+import { useUserStore } from '../stores/user';
 
 interface Props {
   notice: Notice;
@@ -118,7 +119,19 @@ defineEmits(['click', 'edit', 'delete', 'read']);
 const { t } = useI18n();
 const noticeStore = useNoticeStore();
 const systemStore = useSystemStore();
+const userStore = useUserStore();
 
 const reactions = computed(() => noticeStore.getReactions(props.notice.id));
 const getEmoji = (type: string) => systemStore.reactionMap[type] || '❓';
+
+const authorProfile = computed(() => userStore.profiles[props.notice.authorUsername]);
+
+const fetchAuthorProfile = () => {
+  if (props.notice.authorUsername) {
+    userStore.fetchProfile(props.notice.authorUsername);
+  }
+};
+
+onMounted(fetchAuthorProfile);
+watch(() => props.notice.authorUsername, fetchAuthorProfile);
 </script>
