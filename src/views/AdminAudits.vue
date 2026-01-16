@@ -75,18 +75,11 @@
                               {{ truncateText(audit.email) }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                              <div class="flex items-center space-x-2">
-                                <span
-                                  class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-gray-100 text-gray-800 font-mono"
-                                  :title="audit.auditCode">
-                                  {{ truncateText(audit.auditCode) }}
-                                </span>
-                                <button @click="copyToClipboard(audit.auditCode)"
-                                  class="p-1 hover:bg-gray-200 rounded text-gray-400 hover:text-gray-600 transition-colors"
-                                  :title="$t('admin-audit.copy-audit-code')">
-                                  <Copy class="h-3.5 w-3.5" />
-                                </button>
-                              </div>
+                              <span
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-gray-100 text-gray-800 font-mono"
+                                :title="audit.auditCode">
+                                {{ audit.auditCode }}
+                              </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                               <StatusBadge :status="audit.status" :is-expired="audit.isExpired" />
@@ -192,7 +185,7 @@ import StatusBadge from '../components/StatusBadge.vue';
 import { useToastStore } from '../stores/toast';
 import { useAdminAuditStore } from '../stores/adminAudit';
 import CustomScrollContainer from '../components/CustomScrollContainer.vue';
-import { Loader2, ClipboardList, CheckCircle, Copy, Ban } from 'lucide-vue-next';
+import { Loader2, ClipboardList, CheckCircle, Ban } from 'lucide-vue-next';
 import { truncateText } from '../utils/formatters';
 
 interface Audit {
@@ -213,15 +206,6 @@ const toast = useToastStore();
 const showApproveModal = ref(false);
 const showBanModal = ref(false);
 const selectedAudit = ref<Audit | null>(null);
-
-const copyToClipboard = async (text: string) => {
-  try {
-    await navigator.clipboard.writeText(text);
-    toast.success(t('admin-audit.messages.copy-success'), t('admin-audit.messages.copy-success-detail'));
-  } catch (err) {
-    toast.error(t('admin-audit.messages.copy-error'), t('admin-audit.messages.copy-error-detail'));
-  }
-};
 
 const filteredAudits = computed(() => {
   const audits = adminAuditStore.audits;

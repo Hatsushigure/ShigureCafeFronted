@@ -3,7 +3,7 @@
     :class="[
       !displaySrc ? avatarColor : 'bg-gray-100', 
       sizeClass,
-      'rounded-full flex items-center justify-center text-white font-bold shadow-sm border-2 border-white ring-2 ring-gray-50 flex-shrink-0 transition-transform duration-200 hover:scale-105 overflow-hidden',
+      'rounded-full flex items-center justify-center text-white font-bold shadow-sm border-2 border-white ring-2 ring-gray-50 flex-shrink-0 transition-transform duration-200 hover:scale-105 overflow-hidden select-none',
       customClass
     ]"
     :title="name"
@@ -29,27 +29,18 @@ const props = withDefaults(defineProps<{
 });
 
 const displaySrc = ref<string | undefined>(undefined);
-let currentObjectUrl: string | null = null;
-
-const cleanup = () => {
-  if (currentObjectUrl) {
-    URL.revokeObjectURL(currentObjectUrl);
-    currentObjectUrl = null;
-  }
-};
+let isUnmounted = false;
 
 const loadAvatar = async () => {
   const targetSrc = props.src;
   
   if (!targetSrc) {
-    cleanup();
     displaySrc.value = undefined;
     return;
   }
 
   // If it's already a special URL (data or blob), just use it
   if (targetSrc.startsWith('data:') || targetSrc.startsWith('blob:')) {
-    cleanup();
     displaySrc.value = targetSrc;
     return;
   }
@@ -57,15 +48,12 @@ const loadAvatar = async () => {
   // Try to get from cache
   const cachedUrl = await getCachedAvatar(targetSrc);
   
-  // Check if props.src changed while we were checking the cache
-  if (props.src !== targetSrc) {
-    if (cachedUrl) URL.revokeObjectURL(cachedUrl);
+  // Check if unmounted or src changed while we were checking the cache
+  if (isUnmounted || props.src !== targetSrc) {
     return;
   }
 
   if (cachedUrl) {
-    cleanup();
-    currentObjectUrl = cachedUrl;
     displaySrc.value = cachedUrl;
     return;
   }
@@ -77,18 +65,14 @@ const loadAvatar = async () => {
     const blob = await response.blob();
     
     // Only proceed if the src hasn't changed while we were fetching
-    if (props.src === targetSrc) {
-      await cacheAvatar(targetSrc, blob);
-      const newUrl = URL.createObjectURL(blob);
-      cleanup();
-      currentObjectUrl = newUrl;
+    if (!isUnmounted && props.src === targetSrc) {
+      const newUrl = await cacheAvatar(targetSrc, blob);
       displaySrc.value = newUrl;
     }
   } catch (e) {
     console.error('Failed to load/cache avatar:', e);
     // Fallback to original URL if fetch fails
-    if (props.src === targetSrc) {
-      cleanup();
+    if (!isUnmounted && props.src === targetSrc) {
       displaySrc.value = targetSrc;
     }
   }
@@ -97,7 +81,7 @@ const loadAvatar = async () => {
 watch(() => props.src, loadAvatar, { immediate: true });
 
 onUnmounted(() => {
-  cleanup();
+  isUnmounted = true;
 });
 
 const initial = computed(() => {
