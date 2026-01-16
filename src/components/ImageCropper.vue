@@ -26,27 +26,31 @@
       <BaseButton 
         variant="outline" 
         @click="changeScale(1)" 
-        label="+"
-        class="w-10 h-10 p-0 flex items-center justify-center font-bold text-xl"
-      />
+        class="w-10 h-10 !p-0 flex items-center justify-center"
+      >
+        <Plus class="h-6 w-6" />
+      </BaseButton>
       <BaseButton 
         variant="outline" 
         @click="changeScale(-1)" 
-        label="-" 
-        class="w-10 h-10 p-0 flex items-center justify-center font-bold text-xl"
-      />
+        class="w-10 h-10 !p-0 flex items-center justify-center"
+      >
+        <Minus class="h-6 w-6" />
+      </BaseButton>
       <BaseButton 
         variant="outline" 
         @click="rotateLeft" 
-        label="↺" 
-        class="w-10 h-10 p-0 flex items-center justify-center font-bold text-xl"
-      />
+        class="w-10 h-10 !p-0 flex items-center justify-center"
+      >
+        <RotateCcw class="h-6 w-6" />
+      </BaseButton>
       <BaseButton 
         variant="outline" 
         @click="rotateRight" 
-        label="↻" 
-        class="w-10 h-10 p-0 flex items-center justify-center font-bold text-xl"
-      />
+        class="w-10 h-10 !p-0 flex items-center justify-center"
+      >
+        <RotateCw class="h-6 w-6" />
+      </BaseButton>
     </div>
   </div>
 </template>
@@ -56,6 +60,7 @@ import { ref, reactive } from 'vue';
 import 'vue-cropper/dist/index.css';
 import { VueCropper } from 'vue-cropper';
 import BaseButton from './BaseButton.vue';
+import { Plus, Minus, RotateCcw, RotateCw } from 'lucide-vue-next';
 
 const props = defineProps<{
   imgSrc: string;

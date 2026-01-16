@@ -82,6 +82,7 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import api from '../api';
 import { useToastStore } from '../stores/toast';
+import { copyToClipboard } from '../utils/clipboard';
 import AuthLayout from '../components/AuthLayout.vue';
 import BaseInput from '../components/BaseInput.vue';
 import BaseButton from '../components/BaseButton.vue';
@@ -105,14 +106,14 @@ const auditCode = ref('');
 const copied = ref(false);
 
 const copyAuditCode = async () => {
-  try {
-    await navigator.clipboard.writeText(auditCode.value);
+  const success = await copyToClipboard(auditCode.value);
+  if (success) {
     copied.value = true;
     toastStore.success(t('auth.register.messages.copy-success'), t('auth.register.messages.copy-success-detail'));
     setTimeout(() => {
       copied.value = false;
     }, 2000);
-  } catch (err) {
+  } else {
     toastStore.error(t('auth.register.messages.copy-failed'), t('auth.register.messages.copy-failed-detail'));
   }
 };
