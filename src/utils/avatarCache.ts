@@ -39,8 +39,9 @@ export async function getAvatar(url: string): Promise<string | null> {
   }
 
   // 2. Check if there's already a request (DB or Network) in progress
-  if (pendingRequests.has(url)) {
-    return pendingRequests.get(url)!;
+  const existingPromise = pendingRequests.get(url);
+  if (existingPromise) {
+    return existingPromise;
   }
 
   // 3. Create a new pending request
@@ -73,14 +74,18 @@ export async function getAvatar(url: string): Promise<string | null> {
     } catch (e) {
       console.error('Failed to load avatar:', e);
       return null;
-    } finally {
-      if (pendingRequests.get(url) === promise) {
-        pendingRequests.delete(url);
-      }
     }
   })();
 
   pendingRequests.set(url, promise);
+  
+  // Cleanup logic
+  promise.finally(() => {
+    if (pendingRequests.get(url) === promise) {
+      pendingRequests.delete(url);
+    }
+  });
+
   return promise;
 }
 
@@ -99,8 +104,9 @@ export async function getCachedAvatar(url: string): Promise<string | null> {
   }
 
   // 2. Check if there's already a request in progress for this URL
-  if (pendingRequests.has(url)) {
-    return pendingRequests.get(url)!;
+  const existingPromise = pendingRequests.get(url);
+  if (existingPromise) {
+    return existingPromise;
   }
 
   // 3. Create a new pending request for IndexedDB lookup
@@ -128,15 +134,18 @@ export async function getCachedAvatar(url: string): Promise<string | null> {
     } catch (e) {
       console.error('Failed to get avatar from IndexedDB:', e);
       return null;
-    } finally {
-      // Only remove from pending if we are the ones who put it there
-      if (pendingRequests.get(url) === promise) {
-        pendingRequests.delete(url);
-      }
     }
   })();
 
   pendingRequests.set(url, promise);
+
+  // Cleanup logic
+  promise.finally(() => {
+    if (pendingRequests.get(url) === promise) {
+      pendingRequests.delete(url);
+    }
+  });
+
   return promise;
 }
 

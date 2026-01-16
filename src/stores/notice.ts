@@ -33,66 +33,55 @@ export interface PaginatedNotices {
 
 export const useNoticeStore = defineStore('notice', {
   state: () => {
-    const cached = localStorage.getItem('cached_notices');
-    const pagination = localStorage.getItem('notices_pagination');
-    const globalLastUpdated = localStorage.getItem('notices_global_last_updated');
+    const cachedRecords = localStorage.getItem('notice_records_cache');
+    const cachedPages = localStorage.getItem('notice_pages_cache');
+    const pagination = localStorage.getItem('notice_pagination');
+    const globalLastUpdated = localStorage.getItem('notice_global_last_updated');
 
-    const parsePotentialMap = (data: string | null) => {
-      if (!data) return {};
-      try {
-        const parsed = JSON.parse(data);
-        const entries = Array.isArray(parsed) ? parsed : Object.entries(parsed);
-        
-        // Validation: Check if the first notice has authorUsername
-        // If not, it's an old format, return empty to force fresh fetch
-        for (const [_, notices] of entries) {
-          if (Array.isArray(notices) && notices.length > 0) {
-            if (!(notices[0] as any).authorUsername) {
-              console.log('Old notice cache format detected, clearing...');
-              return {};
-            }
-          }
-        }
-
-        if (Array.isArray(parsed)) {
-          return Object.fromEntries(parsed);
-        }
-        return parsed;
-      } catch (e) {
-        return {};
-      }
+    const pag = pagination ? JSON.parse(pagination) : {
+      currentPage: 0,
+      pageSize: 10,
+      totalElements: 0,
+      totalPages: 0
     };
 
     return {
-      notices: parsePotentialMap(cached) as Record<number, Notice[]>,
+      // Data records: id -> Notice object
+      records: (cachedRecords ? JSON.parse(cachedRecords) : {}) as Record<number, Notice>,
+      
+      // Page mapping: pageNumber -> array of IDs
+      pages: (cachedPages ? JSON.parse(cachedPages) : {}) as Record<number, number[]>,
+      
       reactions: {} as Record<number, ReactionCount[]>,
       loading: false,
       globalLastUpdated: globalLastUpdated ? parseInt(globalLastUpdated) : 0,
-      totalPages: pagination ? JSON.parse(pagination).totalPages as number : 0,
-      totalElements: pagination ? JSON.parse(pagination).totalElements as number : 0,
-      currentPage: pagination ? JSON.parse(pagination).currentPage as number : 0,
-      pageSize: pagination ? JSON.parse(pagination).pageSize as number : 10,
-      fetchCount: 0,
-      fetchPromises: {} as Record<string, Promise<void>>,
+      
+      currentPage: pag.currentPage,
+      pageSize: pag.pageSize,
+      totalElements: pag.totalElements,
+      totalPages: pag.totalPages,
+      
+      fetchPromises: {} as Record<string, Promise<any>>,
     };
   },
   getters: {
-    currentNotices: (state) => {
-      return state.notices[state.currentPage] || [];
+    // Get notices for the current page
+    currentNotices: (state): Notice[] => {
+      const ids = state.pages[state.currentPage] || [];
+      return ids.map(id => state.records[id]).filter((n): n is Notice => !!n);
     },
-    getNoticeById: (state) => (id: number) => {
-      for (const page in state.notices) {
-        const pageNotices = state.notices[page];
-        if (Array.isArray(pageNotices)) {
-          const notice = pageNotices.find((n: Notice) => n.id === id);
-          if (notice) return notice;
-        }
-      }
-      return null;
+    getNoticeById: (state) => (id: number): Notice | null => {
+      return state.records[id] || null;
     },
     getReactions: (state) => (id: number) => {
       return state.reactions[id] || [];
-    }
+    },
+    pagination: (state) => ({
+      currentPage: state.currentPage,
+      pageSize: state.pageSize,
+      totalElements: state.totalElements,
+      totalPages: state.totalPages,
+    })
   },
   actions: {
     async fetchNotices(page: number = 0, size: number = 10, force: boolean = false) {
@@ -101,10 +90,10 @@ export const useNoticeStore = defineStore('notice', {
       const sizeNum = size;
 
       // 1. If we have cache and it's not a forced refresh, switch immediately
-      if (!force && this.notices[pageNum]) {
+      if (!force && this.pages[pageNum] && !this.isCacheExpired()) {
         this.currentPage = pageNum;
 
-        // Background check for updates - Fire and forget
+        // Background check for updates
         systemStore.fetchUpdates().then(updates => {
           if (updates.noticeLastUpdated > this.globalLastUpdated) {
             this.performFetchNotices(pageNum, sizeNum);
@@ -116,10 +105,11 @@ export const useNoticeStore = defineStore('notice', {
 
       await this.performFetchNotices(pageNum, sizeNum, force);
     },
+
     async performFetchNotices(pageNum: number, sizeNum: number, force: boolean = false) {
-      const cacheKey = `${pageNum}-${sizeNum}`;
-      if (this.fetchPromises[cacheKey]) {
-        return this.fetchPromises[cacheKey];
+      const promiseKey = `list-${pageNum}-${sizeNum}`;
+      if (this.fetchPromises[promiseKey]) {
+        return this.fetchPromises[promiseKey];
       }
 
       const systemStore = useSystemStore();
@@ -128,7 +118,7 @@ export const useNoticeStore = defineStore('notice', {
 
       const minDelay = 500;
 
-      this.fetchPromises[cacheKey] = (async () => {
+      this.fetchPromises[promiseKey] = (async () => {
         try {
           const url = `/notices?page=${pageNum}&size=${sizeNum}`;
           const [response] = await Promise.all([
@@ -137,50 +127,73 @@ export const useNoticeStore = defineStore('notice', {
           ]);
 
           if (force || systemStore.updates.noticeLastUpdated > this.globalLastUpdated) {
-            this.notices = {};
+            this.pages = {};
           }
 
-          this.notices[pageNum] = response.content;
+          // Update records map
+          response.content.forEach(notice => {
+            this.records[notice.id] = notice;
+          });
+
+          // Update page mapping
+          this.pages[pageNum] = response.content.map(n => n.id);
+          
           this.totalPages = response.totalPages;
           this.totalElements = response.totalElements;
           this.currentPage = response.pageNumber;
           this.pageSize = response.pageSize;
           this.globalLastUpdated = response.timestamp;
-          this.fetchCount++;
 
           this.saveToLocalStorage();
         } catch (error: any) {
           toastStore.error(t('notices.messages.fetch-list-failed'), error.message);
         } finally {
           this.loading = false;
-          delete this.fetchPromises[cacheKey];
+          delete this.fetchPromises[promiseKey];
         }
       })();
 
-      return this.fetchPromises[cacheKey];
+      return this.fetchPromises[promiseKey];
     },
+
     async fetchNoticeById(id: number) {
+      if (this.records[id] && !this.isCacheExpired()) {
+        return this.records[id];
+      }
+
+      const promiseKey = `detail-${id}`;
+      if (this.fetchPromises[promiseKey]) {
+        return this.fetchPromises[promiseKey];
+      }
+
       const toastStore = useToastStore();
       this.loading = true;
-      try {
-        const data = await api.get<Notice>(`/notices/${id}`);
-        this.updateNoticeInCache(data);
-        return data;
-      } catch (error: any) {
-        toastStore.error(t('notices.messages.fetch-detail-failed'), error.message);
-        throw error;
-      } finally {
-        this.loading = false;
-      }
+
+      this.fetchPromises[promiseKey] = (async () => {
+        try {
+          const data = await api.get<Notice>(`/notices/${id}`);
+          this.records[id] = data;
+          this.saveToLocalStorage();
+          return data;
+        } catch (error: any) {
+          toastStore.error(t('notices.messages.fetch-detail-failed'), error.message);
+          throw error;
+        } finally {
+          this.loading = false;
+          delete this.fetchPromises[promiseKey];
+        }
+      })();
+
+      return this.fetchPromises[promiseKey];
     },
+
     async createNotice(noticeData: any) {
       const toastStore = useToastStore();
       try {
         const data = await api.post<Notice>('/notices', noticeData);
-        // We don't necessarily need to add to cache here as it might disrupt pagination, 
-        // but clearing cache or at least marking it as dirty might be good.
-        // For now, let's just clear notices cache to force a refresh on next list view.
-        this.notices = {};
+        this.records[data.id] = data;
+        // Invalidate pages to force fresh fetch of list
+        this.pages = {};
         this.saveToLocalStorage();
         return data;
       } catch (error: any) {
@@ -188,17 +201,35 @@ export const useNoticeStore = defineStore('notice', {
         throw error;
       }
     },
+
     async updateNotice(id: number, noticeData: any) {
       const toastStore = useToastStore();
       try {
         const data = await api.put<Notice>(`/notices/${id}`, noticeData);
-        this.updateNoticeInCache(data);
+        this.records[id] = data;
+        this.saveToLocalStorage();
         return data;
       } catch (error: any) {
         toastStore.error(t('notices.messages.update-failed'), error.message);
         throw error;
       }
     },
+
+    async deleteNotice(id: number) {
+      const toastStore = useToastStore();
+      try {
+        await api.delete(`/notices/${id}`);
+        delete this.records[id];
+        delete this.reactions[id];
+        this.pages = {}; // Invalidate pagination
+        this.saveToLocalStorage();
+        toastStore.success(t('notices.messages.delete-success'));
+      } catch (error: any) {
+        toastStore.error(t('notices.messages.delete-failed'), error.message);
+        throw error;
+      }
+    },
+
     async fetchReactions(id: number) {
       try {
         const data = await api.get<ReactionCount[]>(`/notices/${id}/reactions`);
@@ -208,6 +239,7 @@ export const useNoticeStore = defineStore('notice', {
         throw error;
       }
     },
+
     async fetchReactionsForList(noticeIds: number[]) {
       if (noticeIds.length === 0) return;
       try {
@@ -222,6 +254,7 @@ export const useNoticeStore = defineStore('notice', {
         // Batch reactions fail silently
       }
     },
+
     async toggleReaction(noticeId: number, type: string) {
       const toastStore = useToastStore();
       try {
@@ -233,55 +266,27 @@ export const useNoticeStore = defineStore('notice', {
         throw error;
       }
     },
-    async deleteNotice(id: number) {
-      const { t } = i18n.global;
-      const toastStore = useToastStore();
-      try {
-        await api.delete(`/notices/${id}`);
-        // Clear notices cache because the pagination is now definitely invalid
-        this.notices = {};
-        delete this.reactions[id];
-        this.saveToLocalStorage();
-        toastStore.success(t('notices.messages.delete-success'));
-      } catch (error: any) {
-        toastStore.error(t('notices.messages.delete-failed'), error.message);
-        throw error;
-      }
+
+    isCacheExpired() {
+      const systemStore = useSystemStore();
+      return systemStore.updates.noticeLastUpdated > this.globalLastUpdated;
     },
-    updateNoticeInCache(updatedNotice: Notice) {
-      let found = false;
-      const pages = Object.keys(this.notices);
-      for (const page of pages) {
-        const pageNum = Number(page);
-        const pageNotices = this.notices[pageNum];
-        if (Array.isArray(pageNotices)) {
-          const index = pageNotices.findIndex((n: Notice) => n.id === updatedNotice.id);
-          if (index !== -1) {
-            pageNotices[index] = updatedNotice;
-            found = true;
-          }
-        }
-      }
-      if (found) {
-        this.saveToLocalStorage();
-      }
-    },
+
     saveToLocalStorage() {
-      localStorage.setItem('cached_notices', JSON.stringify(this.notices));
-      localStorage.setItem('notices_global_last_updated', this.globalLastUpdated.toString());
-      localStorage.setItem('notices_pagination', JSON.stringify({
-        totalPages: this.totalPages,
-        totalElements: this.totalElements,
-        currentPage: this.currentPage,
-        pageSize: this.pageSize
-      }));
+      localStorage.setItem('notice_records_cache', JSON.stringify(this.records));
+      localStorage.setItem('notice_pages_cache', JSON.stringify(this.pages));
+      localStorage.setItem('notice_global_last_updated', this.globalLastUpdated.toString());
+      localStorage.setItem('notice_pagination', JSON.stringify(this.pagination));
     },
+
     clearCache() {
-      this.notices = {};
+      this.records = {};
+      this.pages = {};
       this.globalLastUpdated = 0;
-      localStorage.removeItem('cached_notices');
-      localStorage.removeItem('notices_global_last_updated');
-      localStorage.removeItem('notices_pagination');
+      localStorage.removeItem('notice_records_cache');
+      localStorage.removeItem('notice_pages_cache');
+      localStorage.removeItem('notice_global_last_updated');
+      localStorage.removeItem('notice_pagination');
     }
   },
 });

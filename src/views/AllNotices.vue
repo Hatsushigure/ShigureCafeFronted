@@ -64,7 +64,7 @@
           <div class="px-4 sm:px-0">
             <transition name="fade-slide" mode="out-in">
               <div
-                :key="filteredNotices.length > 0 ? `notices-${noticeStore.currentPage}-${searchQuery}-${noticeStore.fetchCount}` : (noticeStore.loading ? 'loading' : 'empty')"
+                :key="filteredNotices.length > 0 ? `notices-${noticeStore.currentPage}-${searchQuery}` : (noticeStore.loading ? 'loading' : 'empty')"
                 class="min-h-[300px] relative">
                 <!-- Loading overlay for refresh -->
                 <div v-if="noticeStore.loading && filteredNotices.length > 0"

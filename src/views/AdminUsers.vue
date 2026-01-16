@@ -3,7 +3,7 @@
     <NavBar />
 
     <div class="py-10 transition-all duration-500 ease-in-out">
-      <AdminPageHeader :title="t('admin-users.title')" v-model="searchQuery" :loading="adminUserStore.loading"
+      <AdminPageHeader :title="t('admin-users.title')" v-model="searchQuery" :loading="userStore.loading"
         :search-placeholder="t('admin-users.search-placeholder')" @refresh="fetchUsers(0, true)" />
 
       <main>
@@ -12,10 +12,10 @@
             <BaseCard body-class="p-0 overflow-hidden" class="animate-slide-up animate-delay-100">
               <transition name="fade-slide" mode="out-in">
                 <div
-                  :key="filteredUsers.length > 0 ? `users-${adminUserStore.currentPage}-${searchQuery}-${adminUserStore.fetchCount}` : (adminUserStore.loading ? 'loading' : 'empty')"
+                  :key="filteredUsers.length > 0 ? `users-${userStore.currentPage}-${searchQuery}` : (userStore.loading ? 'loading' : 'empty')"
                   class="min-h-[300px] flex flex-col">
                   <!-- Loading State (only if no cache) -->
-                  <div v-if="adminUserStore.loading && adminUserStore.users.length === 0"
+                  <div v-if="userStore.loading && filteredUsers.length === 0"
                     class="flex-1 flex justify-center items-center text-gray-400">
                     <Loader2 class="h-8 w-8 animate-spin" />
                   </div>
@@ -30,7 +30,7 @@
                   <!-- Users Table -->
                   <div v-else class="relative flex-1 flex flex-col">
                     <!-- Loading overlay for refresh -->
-                    <div v-if="adminUserStore.loading"
+                    <div v-if="userStore.loading"
                       class="absolute inset-0 bg-white/40 backdrop-blur-[1px] z-10 flex items-center justify-center transition-all duration-300">
                       <Loader2 class="h-8 w-8 animate-spin text-indigo-500" />
                     </div>
@@ -87,7 +87,7 @@
                               <span v-else class="text-xs text-gray-400 italic">{{ t('admin-users.not-bound') }}</span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                              <RoleBadge :role="user.role" />
+                              <RoleBadge :role="user.role!" />
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                               <span :class="[
@@ -98,7 +98,7 @@
                               </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                              <StatusBadge :status="user.status" />
+                              <StatusBadge :status="user.status!" />
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                               <button @click="openEdit(user)"
@@ -143,10 +143,10 @@
 
               <!-- Pagination -->
               <Pagination v-if="filteredUsers.length > 0"
-                :current-page="searchQuery ? 0 : adminUserStore.pagination.currentPage"
-                :total-pages="searchQuery ? Math.ceil(filteredUsers.length / adminUserStore.pagination.pageSize) : adminUserStore.pagination.totalPages"
-                :total-elements="searchQuery ? filteredUsers.length : adminUserStore.pagination.totalElements"
-                :page-size="adminUserStore.pagination.pageSize" @page-change="handlePageChange"
+                :current-page="searchQuery ? 0 : userStore.pagination.currentPage"
+                :total-pages="searchQuery ? Math.ceil(filteredUsers.length / userStore.pagination.pageSize) : userStore.pagination.totalPages"
+                :total-elements="searchQuery ? filteredUsers.length : userStore.pagination.totalElements"
+                :page-size="userStore.pagination.pageSize" @page-change="handlePageChange"
                 class="bg-gray-50/50 border-t border-gray-100" />
             </BaseCard>
           </div>
@@ -322,26 +322,12 @@ import RoleBadge from '../components/RoleBadge.vue';
 import api from '../api';
 import { useToastStore } from '../stores/toast';
 import { useAuthStore } from '../stores/auth';
-import { useAdminUserStore } from '../stores/adminUser';
+import { useUserStore, type User } from '../stores/user';
 import { Edit2, KeyRound, Loader2, Users, Trash2, ChevronDown, Check, Ban, UserCheck, ShieldOff } from 'lucide-vue-next';
 import { formatRole, truncateText } from '../utils/formatters';
 
-interface User {
-  username: string;
-  nickname: string;
-  email: string;
-  role: string;
-  status: string;
-  twoFactorEnabled: boolean;
-  email2faEnabled: boolean;
-  totpEnabled: boolean;
-  avatarUrl?: string;
-  minecraftUuid?: string;
-  minecraftUsername?: string;
-}
-
 const { t } = useI18n();
-const adminUserStore = useAdminUserStore();
+const userStore = useUserStore();
 const searchQuery = ref('');
 const showEditModal = ref(false);
 const showPasswordModal = ref(false);
@@ -355,15 +341,15 @@ const toast = useToastStore();
 const auth = useAuthStore();
 
 const filteredUsers = computed(() => {
-  const users = adminUserStore.users;
+  const users = userStore.adminUsers;
   if (!searchQuery.value) return users;
   const q = searchQuery.value.toLowerCase();
   return users.filter(user =>
     user.username.toLowerCase().includes(q) ||
     user.nickname?.toLowerCase().includes(q) ||
     user.email.toLowerCase().includes(q) ||
-    user.minecraftUsername?.toLowerCase().includes(q) ||
-    user.minecraftUuid?.toLowerCase().includes(q)
+    (user.minecraftUsername && user.minecraftUsername.toLowerCase().includes(q)) ||
+    (user.minecraftUuid && user.minecraftUuid.toLowerCase().includes(q))
   );
 });
 
@@ -384,16 +370,16 @@ const passwordForm = ref({
 });
 
 const fetchUsers = async (page?: number, force: boolean = false) => {
-  const targetPage = typeof page === 'number' ? page : adminUserStore.pagination.currentPage;
+  const targetPage = typeof page === 'number' ? page : userStore.pagination.currentPage;
   try {
-    await adminUserStore.fetchUsers(targetPage, 10, force);
+    await userStore.fetchAdminUsers(targetPage, 10, force);
   } catch (error: any) {
     toast.error(t('admin-users.messages.fetch-failed'), error.message);
   }
 };
 
 const handlePageChange = (page: number) => {
-  const isPageChange = page !== adminUserStore.pagination.currentPage;
+  const isPageChange = page !== userStore.pagination.currentPage;
   if (isPageChange) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -404,7 +390,7 @@ const openEdit = (user: User) => {
   selectedUser.value = user;
   editForm.value.nickname = user.nickname || '';
   editForm.value.email = user.email;
-  editForm.value.role = user.role;
+  editForm.value.role = user.role || 'USER';
   showEditModal.value = true;
 };
 
