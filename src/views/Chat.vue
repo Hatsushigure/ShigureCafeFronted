@@ -55,7 +55,7 @@
                 <span class="inline-block w-8"></span>
                 
                 <span class="absolute right-2.5 bottom-1.5 text-[9px] leading-none opacity-70" :class="group.isMe ? 'text-blue-100' : 'text-gray-400'">
-                  {{ msg.time }}
+                  {{ formatTime(msg.timestamp) }}
                 </span>
               </div>
             </div>
@@ -100,57 +100,45 @@ import { useI18n } from 'vue-i18n';
 import { Gamepad2, Users, Send } from 'lucide-vue-next';
 import NavBar from '../components/NavBar.vue';
 import { useAuthStore } from '../stores/auth';
-
-interface Message {
-  sender: string;
-  content: string;
-  time: string;
-  timestamp: number;
-  isMe: boolean;
-  type: 'system' | 'chat';
-}
-
-interface MessageGroup {
-  sender: string;
-  isMe: boolean;
-  time: string;
-  timestamp: number;
-  messages: Message[];
-}
+import { useChatStore } from '../stores/chat';
+import type { MessageGroup } from '../types/chat';
 
 const { t } = useI18n();
 const authStore = useAuthStore();
+const chatStore = useChatStore();
 const newMessage = ref('');
 const textareaRef = ref<HTMLTextAreaElement | null>(null);
 const messagesAreaRef = ref<HTMLDivElement | null>(null);
 const isConnected = ref(false);
 const isReconnecting = ref(false);
 const onlineCount = ref(0);
-const messages = ref<Message[]>([]);
 
 const groupedMessages = computed(() => {
   const groups: MessageGroup[] = [];
-  messages.value.forEach((msg, idx) => {
+  const currentUsername = authStore.user?.minecraftUsername || authStore.user?.username;
+  
+  chatStore.messages.forEach((msg) => {
     const prevGroup = groups[groups.length - 1];
+    const isMe = msg.sender === currentUsername;
+    const type = msg.sender ? 'chat' : 'system';
     
     // Logic to determine if we should start a new group
     const shouldStartNewGroup = 
       !prevGroup || 
       prevGroup.sender !== msg.sender || 
-      msg.type === 'system' ||
-      prevGroup.messages[0].type === 'system' ||
-      (msg.timestamp - prevGroup.messages[prevGroup.messages.length - 1].timestamp) > 5 * 60 * 1000;
+      type === 'system' ||
+      (prevGroup.messages[0] && !prevGroup.sender) || // Previous was system
+      (msg.timestamp - (prevGroup.messages[prevGroup.messages.length - 1]?.timestamp ?? 0)) > 5 * 60 * 1000;
 
     if (shouldStartNewGroup) {
       groups.push({
         sender: msg.sender,
-        isMe: msg.isMe,
-        time: msg.time,
+        isMe: isMe,
         timestamp: msg.timestamp,
-        messages: [msg]
+        messages: [{ ...msg, isMe, type } as any] // Cast to any to include temporary UI properties
       });
     } else {
-      prevGroup.messages.push(msg);
+      prevGroup.messages.push({ ...msg, isMe, type } as any);
     }
   });
   return groups;
@@ -196,13 +184,11 @@ const connectWebSocket = () => {
     try {
       const data = JSON.parse(event.data);
       // Backend returns ChatMessageResponse: { id, name, message, timestamp }
-      messages.value.push({
+      chatStore.addMessage({
+        id: data.id,
         sender: data.name,
         content: data.message,
-        time: formatTime(data.timestamp),
-        timestamp: data.timestamp,
-        isMe: data.name === (authStore.user?.minecraftUsername || authStore.user?.username),
-        type: 'chat' // Standard chat message
+        timestamp: data.timestamp
       });
       scrollToBottom();
     } catch (e) {
@@ -240,8 +226,10 @@ const startReconnecting = () => {
   }, 5000);
 };
 
-onMounted(() => {
+onMounted(async () => {
+  await chatStore.loadMessages();
   connectWebSocket();
+  scrollToBottom();
 });
 
 onUnmounted(() => {
@@ -271,22 +259,8 @@ const handleSend = () => {
 
   socket.send(JSON.stringify(chatMessage));
   
-  // We don't push to messages here because the server will broadcast it back to us (via Redis/WebSocket)
-  // Or if the backend doesn't broadcast back to sender, we should add it.
-  // Looking at MinecraftWebSocketHandler.java: 
-  // broadcast(response, senderSessionId); 
-  // It skips the senderSessionId, so we SHOULD add it locally or wait for a confirmation.
-  // Actually, handleRedisMessage calls broadcast(response, senderSessionId).
-  // If I am the sender, my session ID is passed as skipSessionId, so I won't receive my own message back.
-  
-  messages.value.push({
-    sender: chatMessage.name,
-    content: chatMessage.message,
-    time: formatTime(chatMessage.timestamp),
-    timestamp: chatMessage.timestamp,
-    isMe: true,
-    type: 'chat'
-  });
+  // We don't add to chatStore here because the server will broadcast it back to us
+  // This ensures we only have one copy of the message with the correct backend ID
 
   newMessage.value = '';
   if (textareaRef.value) textareaRef.value.style.height = 'auto';

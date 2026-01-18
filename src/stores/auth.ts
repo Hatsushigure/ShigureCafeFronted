@@ -125,6 +125,12 @@ export const useAuthStore = defineStore('auth', {
         localStorage.removeItem('token');
         localStorage.removeItem('auth_user_cache');
         localStorage.removeItem('auth_user_last_updated');
+        
+        // Clear chat history from IndexedDB
+        const { useChatStore } = await import('./chat');
+        const chatStore = useChatStore();
+        await chatStore.clearHistory();
+        
         // Optional: redirect to login handled in component or router
       }
     },
