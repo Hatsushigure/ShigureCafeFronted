@@ -232,7 +232,6 @@
     "connected": "Connected to server",
     "reconnecting": "Reconnecting...",
     "disconnected": "Disconnected",
-    "online": "Online",
     "placeholder": "Send message to game...",
     "connecting-tip": "Connecting...",
     "tip": "Messages will be synced to Minecraft server chat in real-time",

@@ -232,7 +232,6 @@
     "connected": "已连接至服务器",
     "reconnecting": "正在重新连接...",
     "disconnected": "未连接",
-    "online": "在线",
     "placeholder": "发送消息到游戏内...",
     "connecting-tip": "正在连接中...",
     "tip": "消息将实时同步至 Minecraft 服务器聊天栏",

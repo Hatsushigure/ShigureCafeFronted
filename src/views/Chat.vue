@@ -1,7 +1,7 @@
 <template>
   <div class="h-screen bg-gray-50 flex flex-col overflow-hidden">
     <NavBar />
-    
+
     <main class="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-8 flex flex-col min-h-0">
       <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden flex flex-col flex-1 min-h-0">
         <!-- Chat Header -->
@@ -13,14 +13,12 @@
             <div>
               <h3 class="text-sm font-bold text-gray-900">{{ t('chat.game-relay', '游戏聊天转发') }}</h3>
               <p class="text-xs flex items-center" :class="isConnected ? 'text-green-500' : 'text-red-500'">
-                <span class="w-1.5 h-1.5 rounded-full mr-1.5" :class="isConnected ? 'bg-green-500' : 'bg-red-500'"></span>
-                {{ isConnected ? t('chat.connected', '已连接至服务器') : (isReconnecting ? t('chat.reconnecting', '正在重新连接...') : t('chat.disconnected', '未连接')) }}
+                <span class="w-1.5 h-1.5 rounded-full mr-1.5"
+                  :class="isConnected ? 'bg-green-500' : 'bg-red-500'"></span>
+                {{ isConnected ? t('chat.connected', '已连接至服务器') : (isReconnecting ? t('chat.reconnecting', '正在重新连接...')
+                  : t('chat.disconnected', '未连接')) }}
               </p>
             </div>
-          </div>
-          <div class="flex items-center space-x-2 text-xs text-gray-400">
-            <Users class="w-4 h-4" />
-            <span>{{ onlineCount }} {{ t('chat.online', '在线') }}</span>
           </div>
         </div>
 
@@ -28,11 +26,9 @@
         <div ref="messagesAreaRef" class="flex-1 overflow-y-auto p-6 bg-gray-50/30">
           <div v-for="(group, gIdx) in groupedMessages" :key="gIdx" class="mb-6 relative">
             <!-- Sticky Sender Header -->
-            <div 
-              class="sticky top-0 z-10 py-2 mb-2 flex items-center backdrop-blur-sm bg-gray-50/60" 
-              :class="group.isMe ? 'justify-end' : 'justify-start'"
-            >
-              <span class="text-xs font-bold px-2 py-0.5 rounded-lg bg-white/50 shadow-sm border border-gray-100" 
+            <div class="sticky top-0 z-10 py-2 mb-2 flex items-center backdrop-blur-sm bg-gray-50/60"
+              :class="group.isMe ? 'justify-end' : 'justify-start'">
+              <span class="text-xs font-bold px-2 py-0.5 rounded-lg bg-white/50 shadow-sm border border-gray-100"
                 :class="group.isMe ? 'text-blue-600' : 'text-gray-700'">
                 {{ group.sender }}
               </span>
@@ -40,21 +36,20 @@
 
             <!-- Messages in Group -->
             <div class="flex flex-col space-y-1" :class="group.isMe ? 'items-end' : 'items-start'">
-              <div v-for="(msg, mIdx) in group.messages" :key="mIdx" 
-                class="px-4 py-2 rounded-2xl text-sm shadow-sm max-w-[85%] break-words relative"
-                :class="[
+              <div v-for="(msg, mIdx) in group.messages" :key="mIdx"
+                class="px-4 py-2 rounded-2xl text-sm shadow-sm max-w-[85%] break-words relative" :class="[
                   group.isMe ? 'bg-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-100',
-                  group.isMe 
-                    ? (mIdx === 0 ? 'rounded-tr-none' : '') 
+                  group.isMe
+                    ? (mIdx === 0 ? 'rounded-tr-none' : '')
                     : (mIdx === 0 ? 'rounded-tl-none' : '')
-                ]"
-              >
+                ]">
                 <span v-if="msg.type === 'system'" class="italic text-gray-500">{{ msg.content }}</span>
                 <span v-else>{{ msg.content }}</span>
                 <!-- Spacer for the timestamp to prevent overlap, keeping it inline with text -->
                 <span class="inline-block w-8"></span>
-                
-                <span class="absolute right-2.5 bottom-1.5 text-[9px] leading-none opacity-70" :class="group.isMe ? 'text-blue-100' : 'text-gray-400'">
+
+                <span class="absolute right-2.5 bottom-1.5 text-[9px] leading-none opacity-70"
+                  :class="group.isMe ? 'text-blue-100' : 'text-gray-400'">
                   {{ formatTime(msg.timestamp) }}
                 </span>
               </div>
@@ -66,22 +61,14 @@
         <div class="p-4 bg-white border-t border-gray-100 shrink-0">
           <div class="flex items-end space-x-3">
             <div class="flex-1 relative">
-              <textarea
-                v-model="newMessage"
-                rows="1"
-                @input="adjustTextarea"
-                @keydown.enter.prevent="handleSend"
-                ref="textareaRef"
-                :disabled="!isConnected"
+              <textarea v-model="newMessage" rows="1" @input="adjustTextarea" @keydown.enter.prevent="handleSend"
+                ref="textareaRef" :disabled="!isConnected"
                 :placeholder="isConnected ? t('chat.placeholder', '发送消息到游戏内...') : t('chat.connecting-tip', '正在连接中...')"
-                class="w-full border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none py-3 px-4 text-sm transition-all duration-200 disabled:bg-gray-50 disabled:cursor-not-allowed"
-              ></textarea>
+                class="w-full border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none py-3 px-4 text-sm transition-all duration-200 disabled:bg-gray-50 disabled:cursor-not-allowed"></textarea>
             </div>
-            <button
-              @click="handleSend"
+            <button @click="handleSend"
               class="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-md hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed"
-              :disabled="!newMessage.trim() || !isConnected"
-            >
+              :disabled="!newMessage.trim() || !isConnected">
               <Send class="w-5 h-5" />
             </button>
           </div>
@@ -97,7 +84,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { Gamepad2, Users, Send } from 'lucide-vue-next';
+import { Gamepad2, Send } from 'lucide-vue-next';
 import NavBar from '../components/NavBar.vue';
 import { useAuthStore } from '../stores/auth';
 import { useChatStore } from '../stores/chat';
@@ -111,21 +98,20 @@ const textareaRef = ref<HTMLTextAreaElement | null>(null);
 const messagesAreaRef = ref<HTMLDivElement | null>(null);
 const isConnected = ref(false);
 const isReconnecting = ref(false);
-const onlineCount = ref(0);
 
 const groupedMessages = computed(() => {
   const groups: MessageGroup[] = [];
   const currentUsername = authStore.user?.minecraftUsername || authStore.user?.username;
-  
+
   chatStore.messages.forEach((msg) => {
     const prevGroup = groups[groups.length - 1];
     const isMe = msg.sender === currentUsername;
     const type = msg.sender ? 'chat' : 'system';
-    
+
     // Logic to determine if we should start a new group
-    const shouldStartNewGroup = 
-      !prevGroup || 
-      prevGroup.sender !== msg.sender || 
+    const shouldStartNewGroup =
+      !prevGroup ||
+      prevGroup.sender !== msg.sender ||
       type === 'system' ||
       (prevGroup.messages[0] && !prevGroup.sender) || // Previous was system
       (msg.timestamp - (prevGroup.messages[prevGroup.messages.length - 1]?.timestamp ?? 0)) > 5 * 60 * 1000;
@@ -165,7 +151,7 @@ const connectWebSocket = () => {
 
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const token = authStore.token;
-  
+
   if (!token) {
     return;
   }
@@ -213,7 +199,7 @@ const connectWebSocket = () => {
 const startReconnecting = () => {
   if (isReconnecting.value) return;
   isReconnecting.value = true;
-  
+
   reconnectTimer = window.setInterval(() => {
     if (!isConnected.value) {
       connectWebSocket();
@@ -258,7 +244,7 @@ const handleSend = () => {
   };
 
   socket.send(JSON.stringify(chatMessage));
-  
+
   // We don't add to chatStore here because the server will broadcast it back to us
   // This ensures we only have one copy of the message with the correct backend ID
 
