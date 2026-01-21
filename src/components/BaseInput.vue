@@ -8,8 +8,8 @@
         <input :id="id" :type="type" :value="modelValue"
           @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)" :placeholder="placeholder"
           :required="required" :autocomplete="autocomplete" :disabled="disabled" :class="[
-            'appearance-none rounded-xl relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 focus:outline-none focus:border-blue-500 sm:text-sm transition-all duration-200 ease-in-out bg-white/50 focus:bg-white disabled:opacity-50 disabled:cursor-not-allowed',
-            error ? 'border-red-300 focus:border-red-500' : ''
+            'form-input',
+            error ? 'form-input-error' : ''
           ]" />
         <slot name="suffix"></slot>
       </div>

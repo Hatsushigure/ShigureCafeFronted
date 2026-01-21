@@ -11,25 +11,56 @@
   --animate-float: float 3s ease-in-out infinite;
 
   @keyframes slide-up {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
+
   @keyframes fade {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
   }
+
   @keyframes scale {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
+
   @keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-    100% { transform: translateY(0px); }
+    0% {
+      transform: translateY(0px);
+    }
+
+    50% {
+      transform: translateY(-10px);
+    }
+
+    100% {
+      transform: translateY(0px);
+    }
   }
 }
 
 @layer utilities {
+
   .fade-enter-active,
   .fade-leave-active {
     transition: opacity 0.2s ease;
@@ -58,7 +89,7 @@
   .scale-enter-active {
     transition: all 0.3s ease-out;
   }
-  
+
   .scale-enter-from {
     opacity: 0;
     transform: scale(0.95);
@@ -80,26 +111,85 @@
   }
 
   /* Animation delay utilities */
-  .animate-delay-50 { animation-delay: 50ms; }
-  .animate-delay-100 { animation-delay: 100ms; }
-  .animate-delay-150 { animation-delay: 150ms; }
-  .animate-delay-200 { animation-delay: 200ms; }
-  .animate-delay-250 { animation-delay: 250ms; }
-  .animate-delay-300 { animation-delay: 300ms; }
-  .animate-delay-350 { animation-delay: 350ms; }
-  .animate-delay-400 { animation-delay: 400ms; }
-  .animate-delay-450 { animation-delay: 450ms; }
-  .animate-delay-500 { animation-delay: 500ms; }
-  .animate-delay-550 { animation-delay: 550ms; }
-  .animate-delay-600 { animation-delay: 600ms; }
-  .animate-delay-650 { animation-delay: 650ms; }
-  .animate-delay-700 { animation-delay: 700ms; }
-  .animate-delay-750 { animation-delay: 750ms; }
-  .animate-delay-800 { animation-delay: 800ms; }
-  .animate-delay-850 { animation-delay: 850ms; }
-  .animate-delay-900 { animation-delay: 900ms; }
-  .animate-delay-950 { animation-delay: 950ms; }
-  .animate-delay-1000 { animation-delay: 1000ms; }
+  .animate-delay-50 {
+    animation-delay: 50ms;
+  }
+
+  .animate-delay-100 {
+    animation-delay: 100ms;
+  }
+
+  .animate-delay-150 {
+    animation-delay: 150ms;
+  }
+
+  .animate-delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .animate-delay-250 {
+    animation-delay: 250ms;
+  }
+
+  .animate-delay-300 {
+    animation-delay: 300ms;
+  }
+
+  .animate-delay-350 {
+    animation-delay: 350ms;
+  }
+
+  .animate-delay-400 {
+    animation-delay: 400ms;
+  }
+
+  .animate-delay-450 {
+    animation-delay: 450ms;
+  }
+
+  .animate-delay-500 {
+    animation-delay: 500ms;
+  }
+
+  .animate-delay-550 {
+    animation-delay: 550ms;
+  }
+
+  .animate-delay-600 {
+    animation-delay: 600ms;
+  }
+
+  .animate-delay-650 {
+    animation-delay: 650ms;
+  }
+
+  .animate-delay-700 {
+    animation-delay: 700ms;
+  }
+
+  .animate-delay-750 {
+    animation-delay: 750ms;
+  }
+
+  .animate-delay-800 {
+    animation-delay: 800ms;
+  }
+
+  .animate-delay-850 {
+    animation-delay: 850ms;
+  }
+
+  .animate-delay-900 {
+    animation-delay: 900ms;
+  }
+
+  .animate-delay-950 {
+    animation-delay: 950ms;
+  }
+
+  .animate-delay-1000 {
+    animation-delay: 1000ms;
+  }
 
   /* Global Scrollbar Styles */
   * {
@@ -166,17 +256,56 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
   .scrollbar-none::-webkit-scrollbar {
     display: none;
   }
 
   /* Remove backticks from inline code in prose and add background box */
-  .prose :not(pre) > code {
+  .prose :not(pre)>code {
     @apply bg-gray-100 px-1.5 py-0.5 rounded-md font-medium;
   }
 
-  .prose :not(pre) > code::before,
-  .prose :not(pre) > code::after {
+  .prose :not(pre)>code::before,
+  .prose :not(pre)>code::after {
     content: "" !important;
+  }
+}
+
+@layer components {
+  .form-input {
+    @apply appearance-none rounded-xl relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 focus:outline-none focus:border-blue-500 sm:text-sm transition-all duration-200 ease-in-out bg-white/50 focus:bg-white disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .form-input-error {
+    @apply border-red-300 focus:border-red-500;
+  }
+
+  .btn {
+    @apply relative flex items-center justify-center py-3 px-4 border text-sm font-bold rounded-xl transition-all duration-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98];
+  }
+
+  .btn-primary {
+    @apply text-white border-transparent bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl;
+  }
+
+  .btn-secondary {
+    @apply text-blue-600 border-blue-200 bg-blue-50/50 hover:bg-blue-100 hover:border-blue-300 shadow-sm;
+  }
+
+  .btn-danger {
+    @apply text-red-700 border-red-200 bg-red-50 hover:bg-red-100 hover:border-red-300 shadow-sm;
+  }
+
+  .btn-warning {
+    @apply text-yellow-700 border-yellow-200 bg-yellow-50 hover:bg-yellow-100 hover:border-yellow-300 shadow-sm;
+  }
+
+  .btn-ghost {
+    @apply text-gray-500 border-transparent bg-transparent hover:bg-gray-100 hover:text-gray-700;
+  }
+
+  .btn-outline {
+    @apply text-gray-700 border-gray-300 bg-white hover:bg-gray-50 hover:border-gray-400 shadow-sm;
   }
 }
