@@ -69,27 +69,38 @@
           </BaseCard>
         </div>
 
-        <!-- Minecraft Section -->
         <div class="mt-8 animate-slide-up animate-delay-100">
           <BaseCard :title="t('profile.minecraft.title')" :subtitle="t('profile.minecraft.subtitle')">
             <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-3">
-                <div
-                  :class="[auth.user?.minecraftUuid ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700', 'px-3 py-1 rounded-full text-xs font-bold transition-colors duration-300']">
-                  {{ auth.user?.minecraftUuid ? t('profile.minecraft.bound') : t('profile.minecraft.not-bound') }}
-                </div>
-                <div class="flex flex-col" v-if="auth.user?.minecraftUuid">
-                  <div class="flex items-center space-x-2">
-                    <span class="text-sm font-semibold text-gray-900">{{ auth.user?.minecraftUsername }}</span>
+              <div class="flex items-center space-x-4">
+                <!-- Avatar on the far left (only if bound) -->
+                <template v-if="auth.user?.minecraftUuid">
+                  <img v-if="mcAvatarUrl" :src="mcAvatarUrl"
+                    class="w-12 h-12 rounded-lg shadow-sm border border-gray-100 object-cover"
+                    :alt="auth.user.minecraftUsername || ''" />
+                  <div v-else class="w-12 h-12 rounded-lg bg-gray-200 animate-pulse"></div>
+                </template>
+
+                <div class="flex flex-col space-y-1.5">
+                  <div v-if="auth.user?.minecraftUuid" class="flex items-center space-x-2">
+                    <span class="text-base font-bold text-gray-900 leading-none">{{ auth.user?.minecraftUsername }}</span>
                     <button @click="handleRefreshMinecraft"
                       class="p-1 text-gray-400 hover:text-blue-600 transition-colors rounded-full hover:bg-blue-50"
                       :title="t('profile.minecraft.refresh-title')" :disabled="refreshLoading">
                       <RotateCw :class="['h-3.5 w-3.5', refreshLoading ? 'animate-spin' : '']" />
                     </button>
                   </div>
+                  <span class="text-sm text-gray-500" v-else>{{ t('profile.minecraft.sync-info') }}</span>
+
+                  <div class="flex items-center">
+                    <div
+                      :class="[auth.user?.minecraftUuid ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700', 'px-3 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold transition-colors duration-300']">
+                      {{ auth.user?.minecraftUuid ? t('profile.minecraft.bound') : t('profile.minecraft.not-bound') }}
+                    </div>
+                  </div>
                 </div>
-                <span class="text-sm text-gray-600" v-else>{{ t('profile.minecraft.sync-info') }}</span>
               </div>
+
               <BaseButton @click="handleBindMinecraft" :disabled="bindLoading"
                 :variant="auth.user?.minecraftUuid ? 'secondary' : 'primary'"
                 :label="auth.user?.minecraftUuid ? t('profile.minecraft.rebind') : t('profile.minecraft.bind-now')"
@@ -149,13 +160,22 @@ import ImageCropper from '../components/ImageCropper.vue';
 import api from '../api';
 import axios from 'axios';
 import { RotateCw, Camera } from 'lucide-vue-next';
-import { cacheAvatar } from '../utils/avatarCache';
+import { cacheAvatar, getMinecraftAvatar } from '../utils/avatarCache';
 
 const { t } = useI18n();
 const auth = useAuthStore();
 const toastStore = useToastStore();
 const bindLoading = ref(false);
 const refreshLoading = ref(false);
+const mcAvatarUrl = ref<string | null>(null);
+
+const loadMinecraftAvatar = async (force: boolean = false) => {
+  if (auth.user?.minecraftUuid && auth.user?.username) {
+    mcAvatarUrl.value = await getMinecraftAvatar(auth.user.username, auth.user.minecraftUuid, 64, force);
+  } else {
+    mcAvatarUrl.value = null;
+  }
+};
 
 const avatarInput = ref<HTMLInputElement | null>(null);
 const showCropModal = ref(false);
@@ -255,6 +275,7 @@ const handleRefreshMinecraft = async () => {
     await api.post(`/users/${auth.user.username}/minecraft/refresh`);
     toastStore.success(t('profile.messages.refresh-success'), t('profile.messages.refresh-success-detail'));
     await auth.fetchCurrentUser();
+    await loadMinecraftAvatar(true);
   } catch (e: any) {
     toastStore.error(t('profile.messages.refresh-failed'), e.message || t('profile.messages.system-error'));
   } finally {
@@ -297,6 +318,7 @@ onMounted(async () => {
   if (!auth.user) {
     await auth.fetchCurrentUser();
   }
+  await loadMinecraftAvatar();
 
   // Handle OAuth2 callback
   const urlParams = new URLSearchParams(window.location.search);
@@ -313,6 +335,7 @@ onMounted(async () => {
       // Force refresh user data
       auth.user = null;
       await auth.fetchCurrentUser();
+      await loadMinecraftAvatar();
     } catch (e: any) {
       toastStore.error(t('profile.messages.bind-failed'), e.message || t('profile.messages.bind-failed-reason'));
     } finally {
