@@ -24,34 +24,44 @@
 
         <!-- Messages Area -->
         <div ref="messagesAreaRef" class="flex-1 overflow-y-auto p-6 bg-gray-50/30">
-          <div v-for="(group, gIdx) in groupedMessages" :key="gIdx" class="mb-6 relative">
-            <!-- Sticky Sender Header -->
-            <div class="sticky top-0 z-10 py-2 mb-2 flex items-center backdrop-blur-sm bg-gray-50/60"
-              :class="group.isMe ? 'justify-end' : 'justify-start'">
-              <span class="text-xs font-bold px-2 py-0.5 rounded-lg bg-white/50 shadow-sm border border-gray-100"
-                :class="group.isMe ? 'text-blue-600' : 'text-gray-700'">
-                {{ group.sender }}
-              </span>
+          <div v-for="(group, gIdx) in groupedMessages" :key="gIdx" class="mb-6 flex items-end space-x-3"
+            :class="group.isMe ? 'flex-row-reverse space-x-reverse' : 'flex-row'">
+
+            <!-- Avatar -->
+            <div v-if="group.sender" class="shrink-0 mb-1 sticky bottom-0 self-end">
+              <UserAvatar :name="group.sender" :src="`https://crafthead.net/avatar/${group.sender}/32`" size="sm" />
+            </div>
+            <div v-else
+              class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center shrink-0 mb-1 sticky bottom-0 self-end">
+              <Settings class="w-4 h-4 text-gray-500" />
             </div>
 
             <!-- Messages in Group -->
-            <div class="flex flex-col space-y-1" :class="group.isMe ? 'items-end' : 'items-start'">
-              <div v-for="(msg, mIdx) in group.messages" :key="mIdx"
-                class="px-4 py-2 rounded-2xl text-sm shadow-sm max-w-[85%] break-words relative" :class="[
-                  group.isMe ? 'bg-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-100',
-                  group.isMe
-                    ? (mIdx === 0 ? 'rounded-tr-none' : '')
-                    : (mIdx === 0 ? 'rounded-tl-none' : '')
-                ]">
-                <span v-if="msg.type === 'system'" class="italic text-gray-500">{{ msg.content }}</span>
-                <span v-else>{{ msg.content }}</span>
-                <!-- Spacer for the timestamp to prevent overlap, keeping it inline with text -->
-                <span class="inline-block w-8"></span>
+            <div class="flex flex-col min-w-0 flex-1" :class="group.isMe ? 'items-end' : 'items-start'">
+              <!-- Sender Name inside the group (only for the first message) -->
+              <span v-if="group.sender" class="text-[11px] font-bold mb-1 px-1"
+                :class="group.isMe ? 'text-blue-600' : 'text-gray-500'">
+                {{ group.sender }}
+              </span>
 
-                <span class="absolute right-2.5 bottom-1.5 text-[9px] leading-none opacity-70"
-                  :class="group.isMe ? 'text-blue-100' : 'text-gray-400'">
-                  {{ formatTime(msg.timestamp) }}
-                </span>
+              <div class="flex flex-col space-y-1 w-full" :class="group.isMe ? 'items-end' : 'items-start'">
+                <div v-for="(msg, mIdx) in group.messages" :key="mIdx"
+                  class="px-4 py-2 rounded-2xl text-sm shadow-sm max-w-[85%] break-words relative" :class="[
+                    group.isMe ? 'bg-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-100',
+                    group.isMe
+                      ? (mIdx === group.messages.length - 1 ? 'rounded-br-none' : '')
+                      : (mIdx === group.messages.length - 1 ? 'rounded-bl-none' : '')
+                  ]">
+                  <span v-if="msg.type === 'system'" class="italic text-gray-500">{{ msg.content }}</span>
+                  <span v-else>{{ msg.content }}</span>
+                  <!-- Spacer for the timestamp to prevent overlap -->
+                  <span class="inline-block w-8"></span>
+
+                  <span class="absolute right-2.5 bottom-1.5 text-[9px] leading-none opacity-70"
+                    :class="group.isMe ? 'text-blue-100' : 'text-gray-400'">
+                    {{ formatTime(msg.timestamp) }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -84,8 +94,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { Gamepad2, Send } from 'lucide-vue-next';
+import { Gamepad2, Send, Settings } from 'lucide-vue-next';
 import NavBar from '../components/NavBar.vue';
+import UserAvatar from '../components/UserAvatar.vue';
 import { useAuthStore } from '../stores/auth';
 import { useChatStore } from '../stores/chat';
 import type { MessageGroup } from '../types/chat';
