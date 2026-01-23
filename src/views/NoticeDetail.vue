@@ -53,31 +53,31 @@
                 notice.pinned ? 'border-orange-200 bg-orange-50/30 ring-1 ring-orange-100' : 'border-gray-100',
                 '!overflow-visible'
               ]">
-                <div class="flex items-start space-x-6">
-                  <div class="flex-shrink-0">
-                    <span class="inline-flex items-center justify-center h-12 w-12 rounded-full"
-                      :class="notice.pinned ? 'bg-orange-100' : 'bg-blue-100'">
-                      <svg class="h-8 w-8" :class="notice.pinned ? 'text-orange-600' : 'text-blue-600'" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                      </svg>
-                    </span>
-                  </div>
-                                      <div class="flex-1 min-w-0">
-                                        <div class="flex justify-between items-start mb-6">
-                                          <div class="flex items-center min-w-0">
-                                            <h4 class="text-2xl font-bold text-gray-900 break-words">{{ notice.title }}</h4>
-                                            <span v-if="notice.pinned"
-                                              class="ml-3 px-2 py-1 text-xs font-bold uppercase tracking-wider bg-orange-100 text-orange-700 rounded-md flex-shrink-0">
-                                              {{ t('notices.pinned') }}
-                                            </span>
-                                          </div>
-                                          <div class="text-right ml-4 flex-shrink-0">
-                                            <span class="block text-sm text-gray-500">{{ formatDateTime(notice.createdAt) }}</span>
-                                          </div>
-                                        </div>
-                                        <div class="prose prose-indigo max-w-none text-gray-700 leading-relaxed break-words"
+                <div class="flex flex-col">
+                  <div class="flex-1 min-w-0">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-6">
+                      <div class="flex items-center min-w-0 space-x-3">
+                        <span class="inline-flex items-center justify-center h-10 w-10 rounded-full flex-shrink-0"
+                          :class="notice.pinned ? 'bg-orange-100' : 'bg-blue-100'">
+                          <component :is="notice.pinned ? Megaphone : Bell"
+                            class="h-5 w-5" :class="notice.pinned ? 'text-orange-600' : 'text-blue-600'" />
+                        </span>
+                        <h4 class="text-2xl font-bold text-gray-900 break-words">{{ notice.title }}</h4>
+                        <span v-if="notice.pinned"
+                          class="hidden sm:inline-flex px-2 py-1 text-xs font-bold uppercase tracking-wider bg-orange-100 text-orange-700 rounded-md flex-shrink-0">
+                          {{ t('notices.pinned') }}
+                        </span>
+                      </div>
+                      <div class="mt-2 sm:mt-0 sm:text-right sm:ml-4 flex-shrink-0">
+                        <div v-if="notice.pinned" class="sm:hidden mb-2">
+                          <span class="inline-flex px-2 py-1 text-xs font-bold uppercase tracking-wider bg-orange-100 text-orange-700 rounded-md">
+                            {{ t('notices.pinned') }}
+                          </span>
+                        </div>
+                        <span class="block text-sm text-gray-500">{{ formatDateTime(notice.createdAt) }}</span>
+                      </div>
+                    </div>
+                    <div class="prose prose-indigo max-w-none text-gray-700 leading-relaxed break-words"
                                           v-html="renderMarkdown(notice.content)"></div>
                     <!-- Emoji Reactions -->
                     <div v-if="notice" class="mt-8 pt-6 border-t border-gray-50">
@@ -182,7 +182,7 @@ import BaseCard from '../components/BaseCard.vue';
 import UserAvatar from '../components/UserAvatar.vue';
 import Modal from '../components/Modal.vue';
 import BaseButton from '../components/BaseButton.vue';
-import { Loader2, ArrowLeft, Edit2, Plus, Trash2 } from 'lucide-vue-next';
+import { Loader2, ArrowLeft, Edit2, Plus, Trash2, Megaphone, Bell } from 'lucide-vue-next';
 import { renderMarkdown } from '../utils/markdown';
 import { formatDateTime } from '../utils/formatters';
 import { useRouter } from 'vue-router';

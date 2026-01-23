@@ -6,31 +6,35 @@
     :border="notice.pinned ? 'border-2 border-orange-300 bg-orange-50/30 ring-2 ring-orange-100/50' : 'border-gray-100'"
     class="h-full"
   >
-    <div class="flex items-start" :class="compact ? 'space-x-4' : 'space-x-6'">
-      <div class="flex-shrink-0">
-        <span class="inline-flex items-center justify-center rounded-full"
-          :class="[
-            notice.pinned ? 'bg-orange-100' : 'bg-blue-100',
-            compact ? 'h-10 w-10' : 'h-12 w-12'
-          ]">
-          <component :is="notice.pinned ? Megaphone : Bell" 
-            :class="[notice.pinned ? 'text-orange-600' : 'text-blue-600', compact ? 'h-5 w-5' : 'h-6 w-6']" 
-          />
-        </span>
-      </div>
+    <div class="flex flex-col">
       <div class="flex-1 min-w-0">
         <div class="flex justify-between items-start">
-          <div class="flex items-center flex-1 min-w-0">
-            <h4 class="font-bold text-gray-900 break-words" :class="compact ? 'text-lg' : 'text-xl'">
+          <div class="flex items-center flex-1 min-w-0 space-x-3">
+            <span class="inline-flex items-center justify-center rounded-full flex-shrink-0"
+              :class="[
+                notice.pinned ? 'bg-orange-100' : 'bg-blue-100',
+                compact ? 'h-8 w-8' : 'h-10 w-10'
+              ]">
+              <component :is="notice.pinned ? Megaphone : Bell" 
+                :class="[notice.pinned ? 'text-orange-600' : 'text-blue-600', compact ? 'h-4 w-4' : 'h-5 w-5']" 
+              />
+            </span>
+            <h4 class="font-bold text-gray-900 break-words" :class="compact ? 'text-xl' : 'text-2xl'">
               {{ notice.title }}
             </h4>
             <span v-if="notice.pinned"
-              class="ml-2 flex-shrink-0 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-orange-100 text-orange-700 rounded-md">
+              class="hidden sm:inline-flex flex-shrink-0 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-orange-100 text-orange-700 rounded-md">
               {{ t('notices.pinned') }}
             </span>
           </div>
           <span class="text-gray-400 ml-4 flex-shrink-0" :class="compact ? 'text-xs' : 'text-sm'">
             {{ formatDateTime(notice.createdAt) }}
+          </span>
+        </div>
+        
+        <div v-if="notice.pinned" class="mt-2 sm:hidden">
+          <span class="inline-flex px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-orange-100 text-orange-700 rounded-md">
+            {{ t('notices.pinned') }}
           </span>
         </div>
         
@@ -58,8 +62,8 @@
 
         <div :class="['flex items-center justify-between border-t border-gray-50', compact ? 'mt-4 pt-3' : 'mt-6 pt-4']">
           <div class="flex items-center text-gray-500" :class="compact ? 'text-xs' : 'text-sm'">
-            <UserAvatar :name="authorProfile?.nickname || notice.authorUsername" :src="authorProfile?.avatarUrl" :size="compact ? 'xs' : 'sm'" class="mr-2" />
-            <span class="font-medium text-gray-900 mr-2">{{ authorProfile?.nickname || notice.authorUsername }}</span>
+            <UserAvatar :name="authorProfile?.nickname || notice.authorUsername" :src="authorProfile?.avatarUrl" :size="compact ? 'xs' : 'sm'" :class="compact ? 'mr-1.5' : 'mr-2'" />
+            <span class="hidden sm:inline font-medium text-gray-900 mr-2">{{ authorProfile?.nickname || notice.authorUsername }}</span>
             <span v-if="notice.updatedAt !== notice.createdAt" class="italic">
               {{ t('notices.edited', { time: formatDateTime(notice.updatedAt) }) }}
             </span>
@@ -69,13 +73,13 @@
               <button @click.stop="$emit('edit', notice)"
                 class="font-bold text-gray-500 hover:text-indigo-600 transition-colors flex items-center"
                 :class="compact ? 'text-xs' : 'text-sm'">
-                <Edit2 class="h-4 w-4 mr-1" />
-                <span :class="compact ? 'hidden sm:inline' : ''">{{ t('notices.edit') }}</span>
+                <Edit2 class="h-4 w-4 sm:mr-1" />
+                <span class="hidden sm:inline">{{ t('notices.edit') }}</span>
               </button>
               <button v-if="!compact" @click.stop="$emit('delete', notice)"
                 class="text-sm font-bold text-red-500 hover:text-red-600 transition-colors flex items-center">
-                <Trash2 class="h-4 w-4 mr-1" />
-                <span>{{ t('notices.delete') }}</span>
+                <Trash2 class="h-4 w-4 sm:mr-1" />
+                <span class="hidden sm:inline">{{ t('notices.delete') }}</span>
               </button>
             </template>
             <button @click.stop="$emit('read', notice)"
