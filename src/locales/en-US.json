@@ -204,9 +204,10 @@
       "link": "Process audits"
     },
     "notice-management": {
-      "title": "Notice Management",
-      "desc": "Publish, edit or delete system notices",
-      "link": "Enter management"
+      "title": "Notice Center",
+      "desc-admin": "Publish, edit or manage system notices",
+      "desc-user": "View latest news and notices of Shigure Cafe",
+      "link": "View details"
     },
     "system-notices": "System Notices",
     "view-all": "View All"

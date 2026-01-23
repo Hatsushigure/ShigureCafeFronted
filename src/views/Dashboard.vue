@@ -74,8 +74,34 @@
             </BaseCard>
           </div>
 
+          <div class="animate-slide-up animate-delay-200">
+            <BaseCard @click="$router.push('/notices')" hoverable body-class="p-6" class="h-full">
+              <div class="flex items-center">
+                <div class="flex-shrink-0 bg-pink-100 rounded-md p-3 group-hover:bg-pink-200 transition-colors">
+                  <svg class="h-6 w-6 text-pink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                  </svg>
+                </div>
+                <div class="ml-4">
+                  <h3 class="text-lg font-medium text-gray-900">{{ t('dashboard.notice-management.title') }}</h3>
+                  <p class="mt-1 text-sm text-gray-500">
+                    {{ auth.user?.role === 'ADMIN' ? t('dashboard.notice-management.desc-admin') :
+                      t('dashboard.notice-management.desc-user') }}
+                  </p>
+                </div>
+              </div>
+              <template #footer>
+                <div class="text-sm">
+                  <span class="font-medium text-pink-600 group-hover:text-pink-500 transition-colors">{{
+                    t('dashboard.notice-management.link') }} &rarr;</span>
+                </div>
+              </template>
+            </BaseCard>
+          </div>
+
           <!-- Admin Cards -->
-          <div v-if="auth.user?.role === 'ADMIN'" class="animate-slide-up animate-delay-200">
+          <div v-if="auth.user?.role === 'ADMIN'" class="animate-slide-up animate-delay-250">
             <BaseCard @click="$router.push('/admin/users')" hoverable body-class="p-6" class="h-full">
               <div class="flex items-center">
                 <div class="flex-shrink-0 bg-purple-100 rounded-md p-3 group-hover:bg-purple-200 transition-colors">
@@ -98,7 +124,7 @@
             </BaseCard>
           </div>
 
-          <div v-if="auth.user?.role === 'ADMIN'" class="animate-slide-up animate-delay-250">
+          <div v-if="auth.user?.role === 'ADMIN'" class="animate-slide-up animate-delay-300">
             <BaseCard @click="$router.push('/admin/audits')" hoverable body-class="p-6" class="h-full">
               <div class="flex items-center">
                 <div class="flex-shrink-0 bg-orange-100 rounded-md p-3 group-hover:bg-orange-200 transition-colors">
@@ -116,29 +142,6 @@
                 <div class="text-sm">
                   <span class="font-medium text-orange-600 group-hover:text-orange-500 transition-colors">{{
                     t('dashboard.audit-management.link') }} &rarr;</span>
-                </div>
-              </template>
-            </BaseCard>
-          </div>
-
-          <div v-if="auth.user?.role === 'ADMIN'" class="animate-slide-up animate-delay-300">
-            <BaseCard @click="$router.push('/notices')" hoverable body-class="p-6" class="h-full">
-              <div class="flex items-center">
-                <div class="flex-shrink-0 bg-pink-100 rounded-md p-3 group-hover:bg-pink-200 transition-colors">
-                  <svg class="h-6 w-6 text-pink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-                  </svg>
-                </div>
-                <div class="ml-4">
-                  <h3 class="text-lg font-medium text-gray-900">{{ t('dashboard.notice-management.title') }}</h3>
-                  <p class="mt-1 text-sm text-gray-500">{{ t('dashboard.notice-management.desc') }}</p>
-                </div>
-              </div>
-              <template #footer>
-                <div class="text-sm">
-                  <span class="font-medium text-pink-600 group-hover:text-pink-500 transition-colors">{{
-                    t('dashboard.notice-management.link') }} &rarr;</span>
                 </div>
               </template>
             </BaseCard>
@@ -210,11 +213,11 @@ const displayedNotices = computed(() => {
 });
 
 const noticeDelayBase = computed(() => {
-  return auth.user?.role === 'ADMIN' ? 'animate-delay-200' : 'animate-delay-100';
+  return auth.user?.role === 'ADMIN' ? 'animate-delay-350' : 'animate-delay-250';
 });
 
 const getNoticeDelay = (index: number) => {
-  const base = auth.user?.role === 'ADMIN' ? 250 : 150;
+  const base = auth.user?.role === 'ADMIN' ? 400 : 300;
   return `animate-delay-${base + index * 50}`;
 };
 

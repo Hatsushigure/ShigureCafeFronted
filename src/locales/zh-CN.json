@@ -204,9 +204,10 @@
       "link": "处理审核"
     },
     "notice-management": {
-      "title": "公告管理",
-      "desc": "发布、编辑或删除系统公告",
-      "link": "进入管理"
+      "title": "公告中心",
+      "desc-admin": "发布、编辑或管理系统公告",
+      "desc-user": "查看猫咖的最新动态与公告",
+      "link": "查看详情"
     },
     "system-notices": "系统公告",
     "view-all": "查看全部"
