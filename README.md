@@ -15,7 +15,7 @@ A modern user management interface built with Vue 3 and Tailwind CSS 4.
 ## ✨ Core Features
 
 - **Game Sync**: Bidirectional real-time chat sync with Minecraft servers.
-- **Security**: TOTP/Email 2FA and Microsoft OAuth2 integration.
+- **Security**: TOTP/Email 2FA, Microsoft OAuth2, and **Cloudflare Turnstile CAPTCHA**.
 - **Notices**: Markdown & KaTeX support with reactions and read tracking.
 - **Admin**: User management, registration audits, and system monitoring.
 - **Multi-language**: Built-in support for English and Chinese.
@@ -36,6 +36,7 @@ Copy `.env.example` to `.env` and adjust for your environment:
 VITE_API_PROXY_TARGET=http://localhost:8080
 VITE_WS_PROXY_TARGET=ws://localhost:8080
 VITE_ALLOWED_HOSTS=localhost
+VITE_TURNSTILE_SITE_KEY=your_site_key_here
 ```
 
 ### Development

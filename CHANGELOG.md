@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.1.1] - 2026-01-24
+
+### Features
+- Integrate Cloudflare Turnstile for CAPTCHA verification (cba48b1)
+- Unified notice entry in the dashboard and added role-based descriptions (81a1865)
+
+### UI/UX
+- Optimize notice card and detail view for both mobile and desktop (207beb6)
+
+### Bug Fixes
+- Prevent UI flicker when binding Minecraft account and ensure force-refresh after profile updates (7b9d423)
+
 ## [v1.1.0] - 2026-01-22
 
 ### Features
