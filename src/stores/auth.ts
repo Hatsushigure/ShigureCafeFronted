@@ -80,6 +80,27 @@ export const useAuthStore = defineStore('auth', {
         await this.fetchCurrentUser(true);
       }
     },
+    async validateToken() {
+      if (!this.token) return false;
+      try {
+        await api.get('/auth/validate');
+        return true;
+      } catch (error) {
+        return false;
+      }
+    },
+    async performSessionCheck() {
+      if (!this.token) {
+        await this.logout({ skipApi: true });
+        return false;
+      }
+      const isValid = await this.validateToken();
+      if (!isValid) {
+        await this.logout({ skipApi: true });
+        return false;
+      }
+      return true;
+    },
     async toggleTwoFactor(enabled: boolean, code?: string) {
       if (!this.user) return;
       await api.put(`/users/${this.user.username}/2fa`, { enabled, code });
@@ -115,9 +136,13 @@ export const useAuthStore = defineStore('auth', {
 
       return this.fetchUserPromise;
     },
-    async logout() {
+    async logout(options: { skipApi?: boolean } = {}) {
       try {
-        await api.delete('/auth/token');
+        if (!options.skipApi && this.token) {
+          await api.delete('/auth/token');
+        }
+      } catch (error) {
+        // Ignore error as we are logging out anyway
       } finally {
         this.token = null;
         this.user = null;
@@ -126,12 +151,13 @@ export const useAuthStore = defineStore('auth', {
         localStorage.removeItem('auth_user_cache');
         localStorage.removeItem('auth_user_last_updated');
         
-        // Clear chat history from IndexedDB
         const { useChatStore } = await import('./chat');
         const chatStore = useChatStore();
         await chatStore.clearHistory();
-        
-        // Optional: redirect to login handled in component or router
+
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
       }
     },
   },

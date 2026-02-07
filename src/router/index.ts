@@ -124,12 +124,8 @@ const router = createRouter({
 router.beforeEach(async (to, _from, next) => {
   const auth = useAuthStore();
 
-  if (auth.token) {
-    if (!auth.user) {
-      await auth.fetchCurrentUser();
-    } else {
-      auth.fetchCurrentUser(); // Run in background, don't await
-    }
+  if (auth.token && !auth.user) {
+    auth.fetchCurrentUser();
   }
 
   const isAuthenticated = !!auth.token;
@@ -139,7 +135,7 @@ router.beforeEach(async (to, _from, next) => {
   } else if (to.meta.guestOnly && isAuthenticated) {
     next({ name: 'Dashboard' });
   } else if (to.meta.requiresAdmin && auth.user?.role !== 'ADMIN') {
-    next({ name: 'Dashboard' }); // Or 403 page
+    next({ name: 'Dashboard' });
   } else {
     next();
   }
