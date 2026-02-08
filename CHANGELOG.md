@@ -1,5 +1,12 @@
 # Changelog
 
+## [v1.1.2] - 2026-02-08
+
+### Features
+- Add email notification toggle in notice editor (44c7da4)
+- Implement session validation and automatic logout for improved security (b8ad005)
+- Add `VITE_TURNSTILE_SITE_KEY` support in Docker and environment configurations (2e74a86)
+
 ## [v1.1.1] - 2026-01-24
 
 ### Features
