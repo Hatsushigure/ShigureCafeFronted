@@ -160,6 +160,8 @@
       "content-label": "内容 (支持 Markdown)",
       "content-placeholder": "公告内容",
       "pinned-label": "置顶此公告",
+      "send-email-label": "同时发送邮件通知",
+      "send-email-hint": "向所有正常状态的用户发送邮件",
       "preview": "预览",
       "preview-placeholder": "输入内容以预览...",
       "messages": {
@@ -167,7 +169,9 @@
         "validation-error": "请填写标题和内容",
         "update-success": "公告更新成功",
         "create-success": "公告发布成功",
-        "save-failed": "保存失败"
+        "save-failed": "保存失败",
+        "email-failed": "邮件发送失败",
+        "email-queued": "邮件通知已加入发送队列"
       }
     },
     "messages": {

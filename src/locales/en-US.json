@@ -160,6 +160,8 @@
       "content-label": "Content (Markdown Supported)",
       "content-placeholder": "Notice Content",
       "pinned-label": "Pin this notice",
+      "send-email-label": "Send Email Notification",
+      "send-email-hint": "Send email to all active users",
       "preview": "Preview",
       "preview-placeholder": "Enter content to preview...",
       "messages": {
@@ -167,7 +169,9 @@
         "validation-error": "Please fill in title and content",
         "update-success": "Notice updated successfully",
         "create-success": "Notice published successfully",
-        "save-failed": "Failed to save"
+        "save-failed": "Failed to save",
+        "email-failed": "Failed to send email",
+        "email-queued": "Email notification has been queued"
       }
     },
     "messages": {

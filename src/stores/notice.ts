@@ -273,6 +273,16 @@ export const useNoticeStore = defineStore('notice', {
       }
     },
 
+    async sendEmailNotification(subject: string, content: string) {
+      const toastStore = useToastStore();
+      try {
+        await api.post('/notifications/email/all-active', { subject, content });
+      } catch (error: any) {
+        toastStore.error(t('notices.editor.messages.email-failed'), error.message);
+        throw error;
+      }
+    },
+
     isCacheExpired() {
       const systemStore = useSystemStore();
       return systemStore.updates.noticeLastUpdated > this.globalLastUpdated;

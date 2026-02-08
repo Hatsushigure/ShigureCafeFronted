@@ -61,6 +61,27 @@
                           :class="form.pinned ? 'translate-x-5' : 'translate-x-0'"></span>
                       </button>
                     </div>
+
+                    <div
+                      class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 transition-all hover:bg-gray-100/50">
+                      <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-indigo-100 rounded-lg">
+                          <Mail class="h-5 w-5 text-indigo-600" />
+                        </div>
+                        <div>
+                          <span class="block text-sm font-bold text-gray-900">{{ t('notices.editor.send-email-label')
+                            }}</span>
+                          <span class="block text-xs text-gray-500">{{ t('notices.editor.send-email-hint') }}</span>
+                        </div>
+                      </div>
+                      <button @click="form.sendEmail = !form.sendEmail" type="button"
+                        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                        :class="form.sendEmail ? 'bg-indigo-500' : 'bg-gray-200'">
+                        <span
+                          class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                          :class="form.sendEmail ? 'translate-x-5' : 'translate-x-0'"></span>
+                      </button>
+                    </div>
                   </div>
                 </BaseCard>
               </div>
@@ -96,7 +117,7 @@ import BaseButton from '../components/BaseButton.vue';
 import BaseInput from '../components/BaseInput.vue';
 import { useNoticeStore } from '../stores/notice';
 import { useToastStore } from '../stores/toast';
-import { ArrowLeft, Save, Loader2, ArrowUpToLine } from 'lucide-vue-next';
+import { ArrowLeft, Save, Loader2, ArrowUpToLine, Mail, Info } from 'lucide-vue-next';
 import { renderMarkdown } from '../utils/markdown';
 
 const { t } = useI18n();
@@ -114,7 +135,8 @@ const saving = ref(false);
 const form = ref({
   title: '',
   content: '',
-  pinned: false
+  pinned: false,
+  sendEmail: false
 });
 
 const fetchNotice = async () => {
@@ -145,12 +167,27 @@ const saveNotice = async () => {
 
   saving.value = true;
   try {
+    const payload = {
+      title: form.value.title,
+      content: form.value.content,
+      pinned: form.value.pinned
+    };
+
     if (isEdit.value) {
-      await noticeStore.updateNotice(Number(id.value), form.value);
+      await noticeStore.updateNotice(Number(id.value), payload);
       toast.success(t('notices.editor.messages.update-success'));
     } else {
-      await noticeStore.createNotice(form.value);
+      await noticeStore.createNotice(payload);
       toast.success(t('notices.editor.messages.create-success'));
+    }
+
+    if (form.value.sendEmail) {
+      try {
+        await noticeStore.sendEmailNotification(form.value.title, form.value.content);
+        toast.success(t('notices.editor.messages.email-queued'));
+      } catch (error) {
+        // Error is already toasted by store
+      }
     }
 
     // Redirect logic: use redirect query param if available, otherwise default to /notices
